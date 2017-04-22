@@ -1,6 +1,6 @@
 class DataGrid{
 	
-	constructor(height,width,defaultValue){
+	constructor(width,height,defaultValue){
 		this.height = height;
 		this.width = width;
 		this.data = [];
@@ -27,9 +27,17 @@ class DataGrid{
 	}
 
 	forAll(callback){
-		for (var y = this.height; y >= 0; y--) {
-			for (var x = this.width; x >= 0; x--) {
+		for (var y = 0; y <= this.height; y++) {
+			for (var x = 0; x <= this.width; x++) {
 				this.data[y][x] = callback(this.data[y][x]);
+			}
+		}
+	}
+
+	forRect(x1,y1,x2,y2,callback){
+		for (var boxY = 0; y1 + boxY <= y2; boxY++) {
+			for (var boxX = 0; x1 + boxX <= x2; boxX++) {
+				this.data[y1 + boxY][x1 + boxX] = callback(this.data[y1 + boxY][x1 + boxX]);
 			}
 		}
 	}

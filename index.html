@@ -14,18 +14,20 @@
 				var newCell = document.createElement("div");
 				newCell.className = "cell " + color
 				grid.appendChild(newCell);
-				return 'drawn'
+				return color;
 			};
 
 			function drawGrid(){
+				grid.setAttribute("style","max-width: "+(testGrid.width+1)*20+"px;")
 				while (grid.hasChildNodes()) {
 				    grid.removeChild(grid.lastChild);
 				}
 				testGrid.forAll(addCell);
 			};
 
-			var testGrid = new DataGrid(9,9,"blue");
-			drawGrid();
+			var testGrid = new DataGrid(19,9,"blue");
+			
+			setInterval(drawGrid, 500);
 		</script>
 	</body>
 </html>
