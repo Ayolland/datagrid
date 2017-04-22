@@ -1,0 +1,31 @@
+<html>
+	<head>
+		<title>DataGrid test file</title>
+		<link href="test.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="grid-display"></div>
+
+		<script src="datagrid.js"></script>
+		<script>
+			var grid = document.getElementById('grid-display');
+
+			function addCell(color){
+				var newCell = document.createElement("div");
+				newCell.className = "cell " + color
+				grid.appendChild(newCell);
+				return 'drawn'
+			};
+
+			function drawGrid(){
+				while (grid.hasChildNodes()) {
+				    grid.removeChild(grid.lastChild);
+				}
+				testGrid.forAll(addCell);
+			};
+
+			var testGrid = new DataGrid(9,9,"blue");
+			drawGrid();
+		</script>
+	</body>
+</html>

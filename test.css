@@ -1,0 +1,30 @@
+#grid-display{
+	max-width: 200px;
+}
+
+.cell{
+	display: block;
+	width: 20px;
+	height: 20px;
+	float: left;
+}
+
+.cell:hover{
+	background: yellow !important;
+}
+
+.blue{
+	background: blue;
+}
+
+.red{
+	background: red;
+}
+
+.green{
+	background: green;
+}
+
+.yellow{
+	background: yellow;
+}
