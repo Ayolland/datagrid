@@ -8,10 +8,10 @@ class DataGrid{
 
 		var usePreviousData = (typeof(defaultValue[0]) == "object");
 
-		for (var tempy = height; tempy >= 0; tempy--) {
+		for (var tempy = height - 1; tempy >= 0; tempy--) {
 			var newRow = [];
 
-			for (var tempx = width; tempx >= 0; tempx--) {
+			for (var tempx = width - 1; tempx >= 0; tempx--) {
 				if( usePreviousData ){
 					var currentSubY = tempy % defaultValue.length;
 					var currentSubX = tempx % defaultValue[currentSubY].length;
@@ -35,9 +35,9 @@ class DataGrid{
 	}
 
 	forAll(callback){
-		for (var y = 0; y <= this.height; y++) {
-			for (var x = 0; x <= this.width; x++) {
-				this.data[y][x] = callback(this.data[y][x]);
+		for (var y = 0; y <= this.height - 1; y++) {
+			for (var x = 0; x <= this.width - 1; x++) {
+				this.data[y][x] = callback(this.data[y][x],x,y);
 			}
 		}
 	}
@@ -49,12 +49,27 @@ class DataGrid{
 	forRect(x1,y1,x2,y2,callback){
 		for (var boxY = 0; y1 + boxY <= y2; boxY++) {
 			for (var boxX = 0; x1 + boxX <= x2; boxX++) {
-				this.data[y1 + boxY][x1 + boxX] = callback(this.data[y1 + boxY][x1 + boxX]);
+				this.data[y1 + boxY][x1 + boxX] = callback(this.data[y1 + boxY][x1 + boxX], boxX, boxY);
 			}
 		}
 	}
 
 	fillRect(x1,y1,x2,y2,value){
 		this.forRect(x1,y1,x2,y2,function(){ return value; })
+	}
+
+	stamp(x,y,data){
+
+		if(typeof(data.length) == "undefined" || typeof(data[0].length) == "undefined"){
+			console.log('stamp data must be an array of arrays');
+			return;
+		}
+
+		var x2 = x + data[0].length - 1;
+		var y2 = y + data.length - 1;
+
+		this.forRect(x,y,x2,y2,function(currentValue,stampX,stampY){
+			return data[stampY][stampX];
+		});
 	}
 }

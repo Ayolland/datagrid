@@ -18,14 +18,14 @@
 			};
 
 			function drawGrid(){
-				grid.setAttribute("style","max-width: "+(testGrid.width+1)*20+"px;")
+				grid.setAttribute("style","max-width: "+(testGrid.width)*20+"px;")
 				while (grid.hasChildNodes()) {
 				    grid.removeChild(grid.lastChild);
 				}
 				testGrid.forAll(addCell);
 			};
 
-			var testGrid = new DataGrid(4,4,"blue");
+			var testGrid = new DataGrid(5,5,"blue");
 			
 			setInterval(drawGrid, 500);
 		</script>
