@@ -1,10 +1,7 @@
 class DataGrid{
 	
 	constructor(width,height,defaultValue){
-		this.height = height;
-		this.width = width;
 		this.data = [];
-		this.isDataGrid = true;
 		defaultValue = (typeof(defaultValue) != "undefined") ? defaultValue : null;
 
 		var usePreviousData = (typeof(defaultValue[0]) == "object");
@@ -26,6 +23,29 @@ class DataGrid{
 		}
 	}
 
+	get height(){
+		return this.data.length;
+	}
+
+	get width(){
+		return this.data[0].length;
+	}
+
+	toString(){
+		return JSON.stringify(this.data);
+	}
+
+	static fromString(JSONstring){
+		var dataArray = JSON.parse(JSONstring);
+		if (typeof(dataArray[0]) == "undefined" || typeof(dataArray[0][0]) == "undefined"){
+			console.log('string must be JSONified array of arrays');
+			return;
+		}
+		var height = dataArray.length;
+		var width = dataArray[0].length;
+		return new DataGrid(width,height,dataArray);
+	}
+
 	forRect(x1,y1,x2,y2,callback){
 		for (var boxY = 0; y1 + boxY <= y2; boxY++) {
 			for (var boxX = 0; x1 + boxX <= x2; boxX++) {
@@ -41,6 +61,11 @@ class DataGrid{
 
 	cloneFromRect(x1,y1,x2,y2){
 		return new DataGrid(x2 - x1 + 1, y2 - y1 + 1, this.get(x1,x2,y1,y2))
+	}
+
+	runRect(x1,y1,x2,y2,callback){
+
+
 	}
 
 	get(x,y,x2,y2){
@@ -68,6 +93,20 @@ class DataGrid{
 		return this.get(x - 1, y - 1, x + 1, y + 1)
 	}
 
+	getNeighborsStats(x,y){
+		var statsObject = {};
+		var tempGrid = new DataGrid(3,3,this.getNeighbors(x,y));
+		var tempCallBack = function(value){
+			if (typeof(statsObject[value]) == "undefined"){
+				statsObject[value] = 0;
+			}
+			statsObject[value]++;
+			return value;
+		}
+		tempGrid.forAll(tempCallBack);
+		return statsObject;
+	}
+
 	set(x,y, value){
 		if ( x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1){
 			return null;
@@ -84,7 +123,7 @@ class DataGrid{
 		}
 
 		if(typeof(data.length) == "undefined" || typeof(data[0].length) == "undefined"){
-			console.log('stamp data must be an array of arrays');
+			console.log('stamp data must be an array of arrays or a DataGrid');
 			return;
 		}
 
