@@ -4,7 +4,8 @@ class DataGrid{
 		this.data = [];
 		defaultValue = (typeof(defaultValue) != "undefined") ? defaultValue : null;
 
-		var usePreviousData = (typeof(defaultValue[0]) == "object");
+		var usePreviousData = (defaultValue !== null && typeof(defaultValue[0]) != "undefined" && defaultValue[0].constructor.name == "Array");
+		var useRandomizer = (defaultValue !== null && !usePreviousData && defaultValue.constructor.name == "Array");
 
 		for (var tempy = 0; tempy <= height - 1; tempy++) {
 			var newRow = [];
@@ -14,6 +15,8 @@ class DataGrid{
 					var currentSubY = tempy % defaultValue.length;
 					var currentSubX = tempx % defaultValue[currentSubY].length;
 					newRow.push(defaultValue[currentSubY][currentSubX])
+				} else if (useRandomizer) {
+					newRow.push( DataGrid.randomize(defaultValue) );
 				} else {
 					newRow.push(defaultValue);
 				}
@@ -46,6 +49,10 @@ class DataGrid{
 		return new DataGrid(width,height,dataArray);
 	}
 
+	static randomize(array){
+		return array[Math.floor(Math.random()*array.length)]
+	}
+
 	forRect(x1,y1,x2,y2,callback){
 		for (var boxY = 0; y1 + boxY <= y2; boxY++) {
 			for (var boxX = 0; x1 + boxX <= x2; boxX++) {
@@ -56,7 +63,14 @@ class DataGrid{
 	}
 
 	fillRect(x1,y1,x2,y2,value){
-		this.forRect(x1,y1,x2,y2,function(){ return value; })
+		this.forRect(x1,y1,x2,y2,function(){
+			if (value.constructor.name == "Array"){ 
+				var returnValue = DataGrid.randomize(value); 
+			} else {
+				var returnValue = value;
+			}
+			return returnValue; 
+		})
 	}
 
 	cloneFromRect(x1,y1,x2,y2){
@@ -64,8 +78,13 @@ class DataGrid{
 	}
 
 	runRect(x1,y1,x2,y2,callback){
-
-
+		var newData = new DataGrid(x2 - x1 + 1,y2 - y1 + 1);
+		var oldData = new DataGrid(x2 - x1 + 1,y2 - y1 + 1, this.get(x1,y1,x2,y2));
+		var injectedCallback = function(oldValue, rectX, rectY){
+			newData.set(rectX, rectY, callback(oldValue, rectX, rectY) );
+		}
+		oldData.forRect(x1,y1,x2,y2,injectedCallback);
+		this.stamp(x1,y1,newData);
 	}
 
 	get(x,y,x2,y2){
@@ -140,10 +159,14 @@ class DataGrid{
 	}
 
 	fillAll(value){
-		this.forAll(function(){ return value; });
+		this.fillRect(0,0,this.width - 1, this.height - 1, value)
 	}
 
 	clone(){
 		this.cloneFromRect(0,0,this.width - 1,this.height - 1)
+	}
+
+	runAll(callback){
+		this.runRect(0,0,this.width - 1, this.height - 1, callback)
 	}
 }
