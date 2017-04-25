@@ -1,7 +1,9 @@
 class DataGrid{
 	
-	constructor(width,height,defaultValue){
+	constructor(width,height,defaultValue,wrapX,wrapY){
 		this.data = [];
+		this.wrapX = (wrapX == true) ? true : false;
+		this.wrapY = (wrapY == true) ? true : false;
 		defaultValue = (typeof(defaultValue) != "undefined") ? defaultValue : null;
 
 		var usePreviousData = (defaultValue !== null && typeof(defaultValue[0]) != "undefined" && defaultValue[0].constructor.name == "Array");
@@ -36,6 +38,26 @@ class DataGrid{
 
 	toString(){
 		return JSON.stringify(this.data);
+	}
+
+	clampXBounds(x){
+		var maxX = this.width - 1;
+
+		if (( x < 0 || x > maxX ) && this.wrapX){
+			x = Math.abs( maxX - Math.abs(x) + 1);
+		}
+
+		return x;
+	}
+
+	clampYBounds(y){
+		var maxY = this.height - 1;
+
+		if (( y < 0 || y > maxY ) && this.wrapY){
+			y = Math.abs( maxY - Math.abs(y) + 1);
+		}
+
+		return y;
 	}
 
 	static fromString(JSONstring){
@@ -73,22 +95,24 @@ class DataGrid{
 		})
 	}
 
-	cloneFromRect(x1,y1,x2,y2){
-		return new DataGrid(x2 - x1 + 1, y2 - y1 + 1, this.get(x1,x2,y1,y2))
+	cloneFromRect(x1,y1,x2,y2,wrapX,wrapY){
+		return new DataGrid(x2 - x1 + 1, y2 - y1 + 1, this.get(x1,x2,y1,y2), wrapX, wrapY)
 	}
 
 	runRect(x1,y1,x2,y2,callback){
-		var newData = new DataGrid(x2 - x1 + 1,y2 - y1 + 1);
-		var oldData = new DataGrid(x2 - x1 + 1,y2 - y1 + 1, this.get(x1,y1,x2,y2));
+		var oldData = this.cloneFromRect(x1,y1,x2,y2);
+		var newData = new DataGrid(oldData.width,oldData.height);
 		var injectedCallback = function(oldValue, rectX, rectY){
 			newData.set(rectX, rectY, callback(oldValue, rectX, rectY) );
 		}
-		oldData.forRect(x1,y1,x2,y2,injectedCallback);
+		oldData.forAll(injectedCallback);
 		this.stamp(x1,y1,newData);
 	}
 
 	get(x,y,x2,y2){
 		if (typeof(x2) == "undefined" || typeof(y2) == "undefined"){
+			x = this.clampXBounds(x);
+			y = this.clampYBounds(y);
 			if ( x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1){
 				return null;
 			} else {
@@ -108,13 +132,13 @@ class DataGrid{
 		}
 	}
 
-	getNeighbors(x,y){
-		return this.get(x - 1, y - 1, x + 1, y + 1)
-	}
-
-	getNeighborsStats(x,y){
+	getStats(x,y,x2,y2){
+		if ( typeof(x2) == "undefined" || typeof(y2) == "undefined" ){
+			console.log("getStats requires two points");
+			return;
+		}
 		var statsObject = {};
-		var tempGrid = new DataGrid(3,3,this.getNeighbors(x,y));
+		var tempGrid = new this.cloneFromRect(x,y,x2,y2);
 		var tempCallBack = function(value){
 			if (typeof(statsObject[value]) == "undefined"){
 				statsObject[value] = 0;
@@ -126,13 +150,24 @@ class DataGrid{
 		return statsObject;
 	}
 
+	getNeighbors(x,y){
+		return this.get(x - 1, y - 1, x + 1, y + 1);
+	}
+
+	getNeighborsStats(x,y){
+		return this.getStats(x - 1, y - 1, x + 1, y + 1);
+	}
+
 	set(x,y, value){
-		if ( x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1){
+		x = this.clampXBounds(x);
+		y = this.clampYBounds(y);
+
+		if ( x < 0 || x > this.width - 1 || y < 0 || y > this.height - 1){
 			return null;
-		} else {
-			this.data[y][x] = value;
-			return this.data[y][x];
 		}
+
+		this.data[y][x] = value;
+		return this.data[y][x];
 	}
 
 	stamp(x,y,data){
@@ -163,7 +198,7 @@ class DataGrid{
 	}
 
 	clone(){
-		this.cloneFromRect(0,0,this.width - 1,this.height - 1)
+		this.cloneFromRect(0, 0, this.width - 1, this.height - 1, this.wrapX, this.wrapY)
 	}
 
 	runAll(callback){

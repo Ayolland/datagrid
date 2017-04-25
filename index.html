@@ -25,7 +25,14 @@
 				testGrid.forAll(addCell);
 			};
 
-			var testGrid = new DataGrid(5,5,["red","blue"]);
+			function testCallback(value){
+				if (value == "red"){
+					return "green";
+				};
+				return value;
+			}
+
+			var testGrid = new DataGrid(20,20,["red","blue"],true,true);
 			
 			setInterval(drawGrid, 500);
 		</script>
