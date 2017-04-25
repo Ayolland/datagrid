@@ -1,7 +1,5 @@
 // HONEY-DO LIST
 //
-// Run Binary rules
-// Run Life
 // Masks
 // Draw Circle
 // Draw Line
@@ -90,16 +88,26 @@ class DataGrid{
 		return array[Math.floor(Math.random()*array.length)]
 	}
 
-	forRect(x1,y1,x2,y2,callback){
+	static distanceBetween(x1,y1,x2,y2){
+		var dY = Math.abs(y2 - y1);
+		var dX = Math.abs(x2 - x1);
+		return Math.sqrt( Math.pow(dY,2) + Math.pow(dX,2) );
+	}
+
+	forRect(x1,y1,x2,y2,callback,mask){
 		for (var boxY = 0; y1 + boxY <= y2; boxY++) {
 			for (var boxX = 0; x1 + boxX <= x2; boxX++) {
 				var value = this.get([x1 + boxX],[y1 + boxY])
-				this.set( [x1 + boxX],[y1 + boxY], callback(value, boxX, boxY, x1, y1) );
+				var maskExists = (typeof(mask) != "undefined" && mask.constructor.name == "Array" && mask[0].constructor.name == "Array")
+				var maskIsBlocking = maskExists && ( mask[boxY][boxX] == null || typeof(mask[boxY][boxX]) == "undefined")
+				if (!maskIsBlocking){
+					this.set( [x1 + boxX],[y1 + boxY], callback(value, boxX, boxY, x1, y1) );
+				}
 			}
 		}
 	}
 
-	fillRect(x1,y1,x2,y2,value){
+	fillRect(x1,y1,x2,y2,value,mask){
 		this.forRect(x1,y1,x2,y2,function(){
 			if (value.constructor.name == "Array"){ 
 				var returnValue = DataGrid.randomize(value); 
@@ -107,7 +115,7 @@ class DataGrid{
 				var returnValue = value;
 			}
 			return returnValue; 
-		})
+		},mask)
 	}
 
 	cloneFromRect(x1,y1,x2,y2,wrapX,wrapY){
@@ -176,6 +184,31 @@ class DataGrid{
 		}
 	}
 
+	forCirc(centerX,centerY,radius,callback,mask){
+		radius = Math.floor(radius);
+		var diameter = radius * 2 + 1;
+		var defaultValue = (typeof(mask) != "undefined" && mask.constructor.name == "Array" && mask[0].constructor.name == "Array") ? mask : 1;
+		var circMask = new DataGrid(diameter,diameter,defaultValue);
+		var circCallback = function(oldValue, boxX, boxY){
+			var isInsideCircle = DataGrid.distanceBetween(radius + 0.5,radius + 0.5,boxX,boxY) <= radius;
+			return (isInsideCircle) ? oldValue : null;
+		}
+		circMask.forAll(circCallback);
+
+		this.forRect(centerX - radius, centerY - radius, centerX + radius, centerY + radius, callback, circMask.data);
+	}
+
+	fillCirc(centerX,centerY,radius,value,mask){
+		this.forCirc(centerX,centerY,radius,function(){
+			if (value.constructor.name == "Array"){ 
+				var returnValue = DataGrid.randomize(value); 
+			} else {
+				var returnValue = value;
+			}
+			return returnValue; 
+		},mask)
+	}
+
 	allStats(){
 		var statsObject = {};
 		var tempCallBack = function(value){
@@ -218,7 +251,7 @@ class DataGrid{
 		return this.data[y][x];
 	}
 
-	stamp(x,y,data){
+	stamp(x,y,data,mask){
 
 		if (data.constructor.name == "DataGrid"){
 			data = data.data;
@@ -237,11 +270,11 @@ class DataGrid{
 		});
 	}
 
-	forAll(callback){
+	forAll(callback,mask){
 		this.forRect(0,0,this.width - 1, this.height - 1, callback);
 	}
 
-	fillAll(value){
+	fillAll(value,mask){
 		this.fillRect(0,0,this.width - 1, this.height - 1, value)
 	}
 

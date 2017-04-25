@@ -37,7 +37,7 @@
 			}
 
 			function testCallback(value){
-				if (value == "red"){
+				if (Math.random() > 0.5){
 					return "green";
 				};
 				return value;
@@ -51,7 +51,7 @@
 			var testGrid = new DataGrid(30,30,["white","blue"],true,true);
 			buildGrid();
 			
-			drawCycle = setInterval(lifeCycle, 100);
+			drawCycle = setInterval(drawGrid, 500);
 		</script>
 	</body>
 </html>
