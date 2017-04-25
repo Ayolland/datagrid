@@ -96,7 +96,9 @@ class DataGrid{
 	}
 
 	cloneFromRect(x1,y1,x2,y2,wrapX,wrapY){
-		return new DataGrid(x2 - x1 + 1, y2 - y1 + 1, this.get(x1,x2,y1,y2), wrapX, wrapY)
+		var rectWidth = x2 - x1 + 1;
+		var rectHeight = y2 - y1 + 1
+		return new DataGrid(rectWidth, rectHeight, this.get(x1,y1,x2,y2), wrapX, wrapY)
 	}
 
 	runRect(x1,y1,x2,y2,callback){
@@ -109,15 +111,19 @@ class DataGrid{
 		this.stamp(x1,y1,newData);
 	}
 
+	getPixel(x,y){
+		x = this.clampXBounds(x);
+		y = this.clampYBounds(y);
+		if ( x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1){
+			return null;
+		} else {
+			return this.data[y][x];
+		}
+	}
+
 	get(x,y,x2,y2){
 		if (typeof(x2) == "undefined" || typeof(y2) == "undefined"){
-			x = this.clampXBounds(x);
-			y = this.clampYBounds(y);
-			if ( x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1){
-				return null;
-			} else {
-				return this.data[y][x];
-			}
+			return this.getPixel(x,y);
 		} else {
 			var dataArray = new Array(y2 - y + 1);
 			var getterCallback = function(value,boxX,boxY){
@@ -132,13 +138,8 @@ class DataGrid{
 		}
 	}
 
-	getStats(x,y,x2,y2){
-		if ( typeof(x2) == "undefined" || typeof(y2) == "undefined" ){
-			console.log("getStats requires two points");
-			return;
-		}
+	allStats(){
 		var statsObject = {};
-		var tempGrid = new this.cloneFromRect(x,y,x2,y2);
 		var tempCallBack = function(value){
 			if (typeof(statsObject[value]) == "undefined"){
 				statsObject[value] = 0;
@@ -146,8 +147,17 @@ class DataGrid{
 			statsObject[value]++;
 			return value;
 		}
-		tempGrid.forAll(tempCallBack);
+		this.forAll(tempCallBack);
 		return statsObject;
+	}
+
+	getStats(x,y,x2,y2){
+		if ( typeof(x2) == "undefined" || typeof(y2) == "undefined" ){
+			console.log("getStats requires two points");
+			return;
+		}
+		var tempGrid = new this.cloneFromRect(x,y,x2,y2);
+		return tempGrid.allStats();
 	}
 
 	getNeighbors(x,y){
@@ -155,7 +165,7 @@ class DataGrid{
 	}
 
 	getNeighborsStats(x,y){
-		return this.getStats(x - 1, y - 1, x + 1, y + 1);
+		return new DataGrid(3,3,this.getNeighbors(x,y)).allStats();
 	}
 
 	set(x,y, value){
