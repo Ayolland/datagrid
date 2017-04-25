@@ -1,3 +1,18 @@
+// HONEY-DO LIST
+//
+// Run Binary rules
+// Run Life
+// Masks
+// Draw Circle
+// Draw Line
+// Draw Outline Rect/Circle
+// Draw Bordered Rect
+// Rotate
+// Run Smoothing
+// Force paths
+// Draw polygon
+
+
 class DataGrid{
 	
 	constructor(width,height,defaultValue,wrapX,wrapY){
@@ -79,7 +94,7 @@ class DataGrid{
 		for (var boxY = 0; y1 + boxY <= y2; boxY++) {
 			for (var boxX = 0; x1 + boxX <= x2; boxX++) {
 				var value = this.get([x1 + boxX],[y1 + boxY])
-				this.set( [x1 + boxX],[y1 + boxY], callback(value, boxX, boxY) );
+				this.set( [x1 + boxX],[y1 + boxY], callback(value, boxX, boxY, x1, y1) );
 			}
 		}
 	}
@@ -102,13 +117,36 @@ class DataGrid{
 	}
 
 	runRect(x1,y1,x2,y2,callback){
-		var oldData = this.cloneFromRect(x1,y1,x2,y2);
-		var newData = new DataGrid(oldData.width,oldData.height);
-		var injectedCallback = function(oldValue, rectX, rectY){
-			newData.set(rectX, rectY, callback(oldValue, rectX, rectY) );
+		var newData = new DataGrid(x2 - x1 + 1, y2 - y1 + 1);
+		var injectedCallback = function(oldValue, rectX, rectY, x1, y1){
+			newData.set(rectX, rectY, callback(oldValue, rectX, rectY, x1, y1) );
+			return oldValue;
 		}
-		oldData.forAll(injectedCallback);
+		this.forRect(x1,y1,x2,y2,injectedCallback);
 		this.stamp(x1,y1,newData);
+	}
+
+	runLifeRect(x1,y1,x2,y2,onValue,offValue){
+		var thisDataGrid = this;
+		var lifeCallback = function(oldValue, rectX, rectY, x1, y1){
+			var statsObject = thisDataGrid.getNeighborsStats(x1 + rectX, y1 + rectY);
+			statsObject[oldValue]--;
+			if (oldValue == onValue){
+				if (statsObject[onValue] < 2 || statsObject[onValue] > 3){
+					return offValue;
+				} else {
+					return onValue;
+				}
+			} else if (oldValue == offValue){
+				if (statsObject[onValue] == 3){
+					return onValue;
+				} else {
+					return offValue;
+				}
+			}
+		}
+
+		this.runRect(x1,y1,x2,y2, lifeCallback);
 	}
 
 	getPixel(x,y){
@@ -126,7 +164,7 @@ class DataGrid{
 			return this.getPixel(x,y);
 		} else {
 			var dataArray = new Array(y2 - y + 1);
-			var getterCallback = function(value,boxX,boxY){
+			var getterCallback = function(value,boxX,boxY,x,y){
 				if(typeof(dataArray[boxY]) == "undefined"){
 					dataArray[boxY] = new Array(x2 - x + 1);
 				}
@@ -214,4 +252,9 @@ class DataGrid{
 	runAll(callback){
 		this.runRect(0,0,this.width - 1, this.height - 1, callback)
 	}
+
+	runLifeAll(onValue,offValue){
+		this.runLifeRect(0,0,this.width - 1,this.height - 1,onValue,offValue)
+	}
+
 }

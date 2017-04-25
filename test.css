@@ -1,3 +1,7 @@
+body{
+	background: black;
+}
+
 #grid-display{
 }
 
@@ -10,6 +14,10 @@
 
 .cell:hover{
 	background: yellow !important;
+}
+
+.white{
+	background: white;
 }
 
 .blue{
