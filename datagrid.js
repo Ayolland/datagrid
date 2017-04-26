@@ -1,6 +1,5 @@
 // HONEY-DO LIST
 //
-// Draw Bordered Rect
 // Shift
 // Rotate
 // Run Smoothing
@@ -321,7 +320,7 @@ class DataGrid{
 			data = data.data;
 		}
 
-		if(typeof(data.length) == "undefined" || typeof(data[0].length) == "undefined"){
+		if(!DataGrid.isValidData(data)){
 			console.log('stamp data must be an array of arrays or a DataGrid');
 			return;
 		}
@@ -331,6 +330,27 @@ class DataGrid{
 
 		this.forRect(x,y,x2,y2,function(currentValue,stampX,stampY){
 			return data[stampY][stampX];
+		});
+	}
+
+	stretchStamp(x1,y1,x2,y2,data,mask){
+		if (data.constructor.name == "DataGrid"){
+			data = data.data;
+		}
+
+		if( !(DataGrid.isValidData(data) && data.length == 3 && data[0].length == 3) ){
+			console.log('stretchStamp data must be a 3x3 array of arrays or a 3x3 DataGrid');
+			return;
+		}
+
+		x2 = (x2 > x1 + 2) ? x2 : x1 + 2;
+		y2 = (y2 > y1 + 2) ? y2 : y1 + 2;
+
+		this.forRect(x1,y1,x2,y2,function(currentValue,stampX,stampY){
+			var xCoord = (x1 + stampX == x1) ? 0 : (x1 + stampX == x2) ? 2 : 1;
+			var yCoord = (y1 + stampY == y1) ? 0 : (y1 + stampY == y2) ? 2 : 1;
+
+			return data[yCoord][xCoord];
 		});
 	}
 
