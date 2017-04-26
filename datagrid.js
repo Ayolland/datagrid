@@ -1,12 +1,12 @@
 // HONEY-DO LIST
 //
-// Draw Line 
-// Draw Outline Rect/Circle
 // Draw Bordered Rect
+// Shift
 // Rotate
 // Run Smoothing
 // Force paths
 // Draw polygon
+// Draw better lines
 
 
 class DataGrid{
@@ -86,17 +86,39 @@ class DataGrid{
 		return array[Math.floor(Math.random()*array.length)]
 	}
 
+	static findValue(value){
+		if (value == null){
+			return null;
+		} else if (value.constructor.name == "Array"){ 
+			var returnValue = DataGrid.randomize(value); 
+		} else {
+			var returnValue = value;
+		}
+		return returnValue;
+	}
+
+	static isValidData(input){
+		return (typeof(input) != "undefined" && input.constructor.name == "Array" && input[0].constructor.name == "Array")
+	}
+
 	static distanceBetween(x1,y1,x2,y2){
 		var dY = Math.abs(y2 - y1);
 		var dX = Math.abs(x2 - x1);
 		return Math.sqrt( Math.pow(dY,2) + Math.pow(dX,2) );
 	}
 
-	forRect(x1,y1,x2,y2,callback,mask){
+	forRect(x1,y1,x2,y2,callback,mask,edgesOnly){
+		var maskExists = DataGrid.isValidData(mask);
+		if (edgesOnly == true){
+			var oldMaskData = maskExists ? mask : 1;
+			var newMask = new DataGrid(x2 - x1 + 1, y2 - y1 + 1, oldMaskData);
+			newMask.fillRect(1,1,newMask.width - 2, newMask.height - 2, null);
+			mask = newMask.data;
+			maskExists = true;
+		}
 		for (var boxY = 0; y1 + boxY <= y2; boxY++) {
 			for (var boxX = 0; x1 + boxX <= x2; boxX++) {
 				var value = this.get([x1 + boxX],[y1 + boxY])
-				var maskExists = (typeof(mask) != "undefined" && mask.constructor.name == "Array" && mask[0].constructor.name == "Array")
 				var maskIsBlocking = maskExists && ( mask[boxY][boxX] == null || typeof(mask[boxY][boxX]) == "undefined")
 				if (!maskIsBlocking){
 					this.set( [x1 + boxX],[y1 + boxY], callback(value, boxX, boxY, x1, y1) );
@@ -106,14 +128,17 @@ class DataGrid{
 	}
 
 	fillRect(x1,y1,x2,y2,value,mask){
-		this.forRect(x1,y1,x2,y2,function(){
-			if (value.constructor.name == "Array"){ 
-				var returnValue = DataGrid.randomize(value); 
-			} else {
-				var returnValue = value;
-			}
-			return returnValue; 
-		},mask)
+		var fillCallback = function(){
+			return DataGrid.findValue(value);
+		};
+		this.forRect(x1,y1,x2,y2,fillCallback,mask);
+	}
+
+	drawRect(x1,y1,x2,y2,value,mask,edgesOnly){
+		var fillCallback = function(){
+			return DataGrid.findValue(value);
+		};
+		this.forRect(x1,y1,x2,y2,fillCallback,mask,true);
 	}
 
 	cloneFromRect(x1,y1,x2,y2,wrapX,wrapY){
@@ -182,21 +207,33 @@ class DataGrid{
 		}
 	}
 
-	forCirc(centerX,centerY,radius,callback,mask){
+	forCirc(centerX,centerY,radius,callback,mask,edgesOnly){
 		radius = Math.floor(radius);
 		var diameter = radius * 2 + 1;
-		var defaultValue = (typeof(mask) != "undefined" && mask.constructor.name == "Array" && mask[0].constructor.name == "Array") ? mask : 1;
+		var defaultValue = DataGrid.isValidData(mask) ? mask : 1;
 		var circMask = new DataGrid(diameter,diameter,defaultValue);
-		var circCallback = function(oldValue, boxX, boxY){
+		var fillCallback = function(oldValue, boxX, boxY){
 			var isInsideCircle = DataGrid.distanceBetween(radius + 0.5,radius + 0.5,boxX,boxY) <= radius;
 			return (isInsideCircle) ? oldValue : null;
 		}
+		var edgeCallback = function(oldValue, boxX, boxY){
+			var isOnPerimeter = Math.round(DataGrid.distanceBetween(radius + 0.5,radius + 0.5,boxX,boxY)) == radius;
+			return (isOnPerimeter) ? oldValue : null;
+		}
+		var circCallback = (edgesOnly == true) ? edgeCallback : fillCallback;
 		circMask.forAll(circCallback);
 
 		this.forRect(centerX - radius, centerY - radius, centerX + radius, centerY + radius, callback, circMask.data);
 	}
 
 	fillCirc(centerX,centerY,radius,value,mask){
+		var fillCallback = function(){
+			return DataGrid.findValue(value);
+		};
+		this.forCirc(centerX,centerY,radius,fillCallback,mask);
+	}
+
+	drawCirc(centerX,centerY,radius,value,mask){
 		this.forCirc(centerX,centerY,radius,function(){
 			if (value.constructor.name == "Array"){ 
 				var returnValue = DataGrid.randomize(value); 
@@ -204,11 +241,11 @@ class DataGrid{
 				var returnValue = value;
 			}
 			return returnValue; 
-		},mask)
+		}, mask, true);
 	}
 
 	forLine(x1,y1,x2,y2,callback,mask){
-		var defaultValue = (typeof(mask) != "undefined" && mask.constructor.name == "Array" && mask[0].constructor.name == "Array") ? mask : 1;
+		var defaultValue = DataGrid.isValidData(mask) ? mask : 1;
 		var lineMask = new DataGrid( Math.abs(x2 - x1) + 1, Math.abs(y2 - y1) + 1, defaultValue, true, true);
 		var xMin = Math.min(x1,x2);
 		var xMax = Math.max(x1,x2);
@@ -230,14 +267,10 @@ class DataGrid{
 	}
 
 	fillLine(x1,y1,x2,y2,value,mask){
-		this.forLine(x1,y1,x2,y2,function(){
-			if (value.constructor.name == "Array"){ 
-				var returnValue = DataGrid.randomize(value); 
-			} else {
-				var returnValue = value;
-			}
-			return returnValue; 
-		},mask)
+		var fillCallback = function(){
+			return DataGrid.findValue(value);
+		};
+		this.forLine(x1,y1,x2,y2,fillCallback,mask);
 	}
 
 	allStats(){
