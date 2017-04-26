@@ -1,8 +1,6 @@
 // HONEY-DO LIST
 //
-// Masks
-// Draw Circle
-// Draw Line
+// Draw Line 
 // Draw Outline Rect/Circle
 // Draw Bordered Rect
 // Rotate
@@ -200,6 +198,39 @@ class DataGrid{
 
 	fillCirc(centerX,centerY,radius,value,mask){
 		this.forCirc(centerX,centerY,radius,function(){
+			if (value.constructor.name == "Array"){ 
+				var returnValue = DataGrid.randomize(value); 
+			} else {
+				var returnValue = value;
+			}
+			return returnValue; 
+		},mask)
+	}
+
+	forLine(x1,y1,x2,y2,callback,mask){
+		var defaultValue = (typeof(mask) != "undefined" && mask.constructor.name == "Array" && mask[0].constructor.name == "Array") ? mask : 1;
+		var lineMask = new DataGrid( Math.abs(x2 - x1) + 1, Math.abs(y2 - y1) + 1, defaultValue, true, true);
+		var xMin = Math.min(x1,x2);
+		var xMax = Math.max(x1,x2);
+		var yMin = Math.min(y1,y2);
+		var yMax = Math.max(y1,y2);
+		var slope = (y2 - y1) / (x2 - x1);
+		if (slope == 0){
+			this.forRect(xMin,yMin,xMax,yMax,callback);
+			return;
+		}
+		var lineCallback = function(maskValue, boxX, boxY){
+			var postiveSlopeFix = (boxX == Math.round(boxY / slope)) ? 1 : null;
+			var negativeSlopeHack = (boxX == lineMask.clampYBounds(Math.round((boxY + 1) / slope))) ? 1 : null;
+			return slope > 0 ? postiveSlopeFix : negativeSlopeHack;
+		}
+		lineMask.forAll(lineCallback);
+		
+		this.forRect(xMin,yMin,xMax,yMax,callback,lineMask.data);
+	}
+
+	fillLine(x1,y1,x2,y2,value,mask){
+		this.forLine(x1,y1,x2,y2,function(){
 			if (value.constructor.name == "Array"){ 
 				var returnValue = DataGrid.randomize(value); 
 			} else {
