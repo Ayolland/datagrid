@@ -1,8 +1,9 @@
 // HONEY-DO LIST
 //
-// Rotate
-// Draw polygon
+// Add Masks to Run/Smooth/Life
+// Fill/For polygon
 // Draw better lines
+// Draw/For Path
 // Force paths
 
 
@@ -266,6 +267,13 @@ class DataGrid{
 		this.stamp(x1 + dX, y1 + dY, newStamp, mask);
 	}
 
+	rotateRect(x1,y1,x2,y2,turns,background){
+		var rotateGrid = this.cloneFromRect(x1,y1,x2,y2);
+		this.fillRect(x1,y1,x2,y2,background);
+		rotateGrid.rotateAll(turns);
+		this.stamp(x1,y1,rotateGrid);
+	}
+
 	getPixel(x,y){
 		x = this.clampXBounds(x);
 		y = this.clampYBounds(y);
@@ -476,6 +484,21 @@ class DataGrid{
 
 	shiftAll(dX,dY,background,mask){
 		this.shiftRect(0,0,this.width - 1,this.height - 1,dX,dY,background,mask);
+	}
+
+	rotateAll(turns){
+
+		turns = Math.round(turns) % 4
+		var direction = (turns > 0) ? 1 : -1;
+		var orginalGrid = this;
+
+		for (var i = 0; i < Math.abs(turns); i++) {
+			var tempGrid = new DataGrid(orginalGrid.height,orginalGrid.width);
+			tempGrid.forAll(function(value,x,y){
+				return (direction == 1) ? orginalGrid.get(y,orginalGrid.height - x - 1) : orginalGrid.get(orginalGrid.width - y - 1,x);
+			});
+			this.data = tempGrid.data;
+		}
 	}
 
 }
