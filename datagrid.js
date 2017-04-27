@@ -130,9 +130,12 @@ class DataGrid{
 		for (var boxY = 0; y1 + boxY <= y2; boxY++) {
 			for (var boxX = 0; x1 + boxX <= x2; boxX++) {
 				var value = this.get([x1 + boxX],[y1 + boxY])
-				var maskIsBlocking = maskExists && ( mask[boxY][boxX] == null || typeof(mask[boxY][boxX]) == "undefined")
+				var maskIsBlocking = maskExists && ( mask[boxY][boxX] == null || typeof(mask[boxY][boxX]) == "undefined");
 				if (!maskIsBlocking){
-					this.set( [x1 + boxX],[y1 + boxY], callback(value, boxX, boxY, x1, y1) );
+					var setValue = callback(value, boxX, boxY, x1, y1);
+					if (setValue != "skip"){
+						this.set( [x1 + boxX],[y1 + boxY], setValue );
+					}
 				}
 			}
 		}
@@ -365,6 +368,39 @@ class DataGrid{
 		};
 		this.forLine(x1,y1,x2,y2,fillCallback,mask);
 	}
+
+	// forPolygon(pointsData,callback,mask){
+	// 	if( !DataGrid.isValidData(pointsData) || pointsData[0].length != 2){
+	// 		console.log("point data for polygons needs to be an Array of 2-length Arrays");
+	// 		return;
+	// 	}
+
+	// 	var xValues = pointsData.map(function(pointArray){
+	// 		return pointArray[0];
+	// 	});
+	// 	var yValues = pointsData.map(function(pointArray){
+	// 		return pointArray[1];
+	// 	});
+	// 	pointsData.push(pointsData[0]);
+	// 	var x1 = Math.min.apply(null, xValues);
+	// 	var y1 = Math.min.apply(null, yValues);
+	// 	var x2 = Math.max.apply(null, xValues);
+	// 	var y2 = Math.max.apply(null, yValues);
+	// 	var previousMaskData = (DataGrid.isValidData(mask))? mask : 1;
+	// 	var maskGrid = new DataGrid (x2 - x1 + 1, y2 - y1 + 1, previousMaskData);
+
+	// 	var chopCallback = function(maskValue, boxX, boxY){
+
+	// 		var postiveSlopeFix = (boxX < Math.round(boxY / slope)) ? 1 : null;
+	// 		var negativeSlopeHack = (boxX > lineMask.clampYBounds(Math.round((boxY + 1) / slope))) ? 1 : null;
+	// 		return slope > 0 ? postiveSlopeFix : negativeSlopeHack;
+	// 	}
+
+	// 	for (var i = pointsData.length - 2; i >= 0; i--) {
+	// 		pointsData[i]
+	// 	}
+
+	// }
 
 	allStats(){
 		var statsObject = {};
