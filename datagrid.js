@@ -1,11 +1,9 @@
 // HONEY-DO LIST
 //
-// Mask by value
-// Shift
 // Rotate
-// Force paths
 // Draw polygon
 // Draw better lines
+// Force paths
 
 
 class DataGrid{
@@ -104,6 +102,20 @@ class DataGrid{
 		var dY = Math.abs(y2 - y1);
 		var dX = Math.abs(x2 - x1);
 		return Math.sqrt( Math.pow(dY,2) + Math.pow(dX,2) );
+	}
+
+	static invertMask(mask){
+		if (!DataGrid.isValidData(mask)){
+			console.log('invert mask can only be applied to an array of arrays');
+			return;
+		}
+
+		var tempGrid = new DataGrid( mask[0].length, mask.length, mask);
+		function inversionCallback(value){
+			return (value == null) ? 1 : null;
+		}
+		tempGrid.forAll(inversionCallback);
+		return tempGrid.data;
 	}
 
 	forRect(x1,y1,x2,y2,callback,mask,edgesOnly){
@@ -243,6 +255,15 @@ class DataGrid{
 
 		this.forRect(x1,y1,x2,y2,maskingCallback,mask);
 		return maskGrid.data;
+	}
+
+	shiftRect(x1,y1,x2,y2,dX,dY,background,mask){
+		var newStamp = this.cloneFromRect(x1,y1,x2,y2);
+		if (DataGrid.isValidData(mask)){
+			var invertedMask = DataGrid.invertMask(mask);
+		}
+		this.fillRect(x1,y1,x2,y2,background,invertedMask);
+		this.stamp(x1 + dX, y1 + dY, newStamp, mask);
 	}
 
 	getPixel(x,y){
@@ -451,6 +472,10 @@ class DataGrid{
 
 	getMaskAll(values,invert,mask){
 		return this.getMaskRect(0,0,this.width - 1,this.height - 1,values,invert,mask);
+	}
+
+	shiftAll(dX,dY,background,mask){
+		this.shiftRect(0,0,this.width - 1,this.height - 1,dX,dY,background,mask);
 	}
 
 }
