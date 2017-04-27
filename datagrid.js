@@ -1,6 +1,5 @@
 // HONEY-DO LIST
 //
-// Add Masks to Run/Smooth/Life
 // Fill/For polygon
 // Draw better lines
 // Draw/For Path
@@ -159,17 +158,17 @@ class DataGrid{
 		return new DataGrid(rectWidth, rectHeight, this.get(x1,y1,x2,y2), wrapX, wrapY)
 	}
 
-	runRect(x1,y1,x2,y2,callback){
+	runRect(x1,y1,x2,y2,callback,mask){
 		var newData = new DataGrid(x2 - x1 + 1, y2 - y1 + 1);
 		var injectedCallback = function(oldValue, rectX, rectY, x1, y1){
 			newData.set(rectX, rectY, callback(oldValue, rectX, rectY, x1, y1) );
 			return oldValue;
 		}
-		this.forRect(x1,y1,x2,y2,injectedCallback);
+		this.forRect(x1,y1,x2,y2,injectedCallback,mask);
 		this.stamp(x1,y1,newData);
 	}
 
-	runLifeRect(x1,y1,x2,y2,onValue,offValue){
+	runLifeRect(x1,y1,x2,y2,onValue,offValue,mask){
 		var thisDataGrid = this;
 		var lifeCallback = function(oldValue, rectX, rectY, x1, y1){
 			var statsObject = thisDataGrid.getNeighborsStats(x1 + rectX, y1 + rectY);
@@ -189,10 +188,10 @@ class DataGrid{
 			}
 		}
 
-		this.runRect(x1,y1,x2,y2, lifeCallback);
+		this.runRect(x1,y1,x2,y2, lifeCallback,mask);
 	}
 
-	smoothRect(x1,y1,x2,y2,valuesGroup,rulesSet){
+	smoothRect(x1,y1,x2,y2,valuesGroup,rulesSet,mask){
 		if(valuesGroup.constructor.name != "Array"){
 			console.log("acceptable values needs to be an array of values part of smoothing group");
 			return;
@@ -235,7 +234,7 @@ class DataGrid{
 			return originalValue;
 		}
 
-		this.runRect(x1,y1,x2,y2,smoothingCallback);
+		this.runRect(x1,y1,x2,y2,smoothingCallback,mask);
 	}
 
 	getMaskRect(x1,y1,x2,y2,values,invert,mask){
@@ -466,15 +465,15 @@ class DataGrid{
 		return this.cloneFromRect(0, 0, this.width - 1, this.height - 1, this.wrapX, this.wrapY)
 	}
 
-	runAll(callback){
+	runAll(callback,mask){
 		this.runRect(0,0,this.width - 1, this.height - 1, callback)
 	}
 
-	runLifeAll(onValue,offValue){
+	runLifeAll(onValue,offValue,mask){
 		this.runLifeRect(0,0,this.width - 1,this.height - 1,onValue,offValue)
 	}
 
-	smoothAll(valuesGroup,rulesSet){
+	smoothAll(valuesGroup,rulesSet,mask){
 		this.smoothRect(0,0,this.width - 1,this.height - 1,valuesGroup,rulesSet);
 	}
 

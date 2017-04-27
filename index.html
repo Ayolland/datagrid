@@ -77,23 +77,25 @@
 			var forestGroup2 = ["green"];
 
 			function smGr1(){
-				testGrid.smoothAll(forestGroup2,forestRules1);
+				var currentMask = testGrid.getMaskAll(forestGroup2);
+				testGrid.smoothAll(forestGroup2,forestRules1, currentMask);
 			}
 
 			function smGr2(){
-				testGrid.smoothAll(forestGroup1,forestRules2);
+				var currentMask = testGrid.getMaskAll(forestGroup1);
+				testGrid.smoothAll(forestGroup1,forestRules2, currentMask);
 			}
 
 			function smoothGrid(){
-				testGrid.smoothAll(forestGroup2,forestRules1);
-				testGrid.smoothAll(forestGroup2,forestRules1);
-				testGrid.smoothAll(forestGroup1,forestRules2);
-				testGrid.smoothAll(forestGroup1,forestRules2);
-				testGrid.smoothAll(forestGroup1,forestRules2);
-				testGrid.smoothAll(forestGroup1,forestRules2);
+				smGr1();
+				smGr1();
+				smGr2();
+				smGr2();
+				smGr2();
+				smGr2();
 			}
 
-			var testGrid = new DataGrid(10,20,["grass","green","green","green"],true,true);
+			var testGrid = new DataGrid(20,20,["grass","green","green","green"],true,true);
 			buildGrid();
 			//smoothGrid();
 			
