@@ -24,7 +24,7 @@
 			}
 
 			function buildGrid(){
-				grid.setAttribute("style","width: "+(testGrid.width)*20+"px;")
+				grid.setAttribute("style","width: "+(testGrid.width)*16+"px;")
 				while (grid.hasChildNodes()) {
 				    grid.removeChild(grid.lastChild);
 				}
@@ -48,8 +48,47 @@
 				drawGrid();
 			}
 
-			var testGrid = new DataGrid(30,30,["white","blue"],true,true);
+			var forestRules1 = [
+				DataGrid.fromString('[["ignore","group","ignore"],["outside","tree","outside"],["ignore","group","ignore"]]'),
+				DataGrid.fromString('[["ignore","outside","ignore"],["group","tree","group"],["ignore","outside","ignore"]]')
+			];
+
+			var forestRules2 = [
+				DataGrid.fromString('[["ignore","outside","ignore"],["outside","forest00","group"],["ignore","group","group"]]'),
+				DataGrid.fromString('[["ignore","outside","ignore"],["group","forest01","group"],["ignore","group","ignore"]]'),
+				DataGrid.fromString('[["ignore","outside","ignore"],["group","forest02","outside"],["group","group","ignore"]]'),
+				DataGrid.fromString('[["ignore","group","ignore"],["outside","forest10","group"],["ignore","group","ignore"]]'),
+				DataGrid.fromString('[["ignore","group","ignore"],["group","forest","group"],["ignore","group","ignore"]]'),
+				DataGrid.fromString('[["ignore","group","ignore"],["group","forest12","outside"],["ignore","group","ignore"]]'),
+				DataGrid.fromString('[["ignore","group","ignore"],["outside","forest20","group"],["ignore","outside","ignore"]]'),
+				DataGrid.fromString('[["ignore","group","ignore"],["group","forest21","group"],["ignore","outside","ignore"]]'),
+				DataGrid.fromString('[["ignore","group","ignore"],["group","forest22","outside"],["ignore","outside","ignore"]]'),
+				DataGrid.fromString('[["ignore","ignore","ignore"],["ignore","grass","ignore"],["ignore","ignore","ignore"]]')
+			];
+
+			var forestGroup1 = ["green","forest","forest00","forest01","forest02","forest10","forest12","forest20",,"forest21","forest22"];
+			var forestGroup2 = ["green"];
+
+			function smGr1(){
+				testGrid.smoothAll(forestGroup2,forestRules1);
+			}
+
+			function smGr2(){
+				testGrid.smoothAll(forestGroup1,forestRules2);
+			}
+
+			function smoothGrid(){
+				testGrid.smoothAll(forestGroup2,forestRules1);
+				testGrid.smoothAll(forestGroup2,forestRules1);
+				testGrid.smoothAll(forestGroup1,forestRules2);
+				testGrid.smoothAll(forestGroup1,forestRules2);
+				testGrid.smoothAll(forestGroup1,forestRules2);
+				testGrid.smoothAll(forestGroup1,forestRules2);
+			}
+
+			var testGrid = new DataGrid(30,30,["grass","green","green"],true,true);
 			buildGrid();
+			//smoothGrid();
 			
 			drawCycle = setInterval(drawGrid, 500);
 		</script>

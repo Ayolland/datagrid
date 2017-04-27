@@ -179,6 +179,52 @@ class DataGrid{
 		this.runRect(x1,y1,x2,y2, lifeCallback);
 	}
 
+	smoothRect(x1,y1,x2,y2,valuesGroup,rulesSet){
+		if(valuesGroup.constructor.name != "Array"){
+			console.log("acceptable values needs to be an array of values part of smoothing group");
+			return;
+		}
+
+		if(rulesSet.constructor.name != "Array" || rulesSet[0].constructor.name != "DataGrid" ){
+			console.log("rules set needs to be an array of DataGrids");
+			return;
+		}
+
+		var thisDataGrid = this;
+		var matchesRule;
+
+		function checkRule(rule,x,y){
+			var areaToCheck = new DataGrid(3,3,thisDataGrid.getNeighbors(x,y));
+
+			rule.forAll(function(ruleCellValue,ruleX,ruleY){
+				var cellIsMatchesGroup = ruleCellValue == "group" && valuesGroup.indexOf(areaToCheck.data[ruleY][ruleX]) != -1;
+				var cellIsMatchesOutside = ruleCellValue == "outside" && valuesGroup.indexOf(areaToCheck.data[ruleY][ruleX]) == -1;
+				var checkingCenterCell = ruleX == 1 && ruleY == 1 && valuesGroup.indexOf(areaToCheck.data[ruleY][ruleX]) != -1;
+				var cellMatchesExactly = ruleCellValue == areaToCheck.data[ruleY][ruleX];
+				if (ruleCellValue == "ignore" || checkingCenterCell || cellIsMatchesGroup || cellMatchesExactly || cellIsMatchesOutside){
+					return ruleCellValue;
+				} else {
+					matchesRule = false;
+					return ruleCellValue;
+				};
+			});
+		}
+
+		function smoothingCallback(originalValue,rectX,rectY,x1,y1){
+			for (var i = 0; i < rulesSet.length; i++) {
+				matchesRule = true;
+				checkRule(rulesSet[i], x1 + rectX, y1 + rectY);
+				if (matchesRule != false){
+					return rulesSet[i].get(1,1);
+					break;
+				}
+			}
+			return originalValue;
+		}
+
+		this.runRect(x1,y1,x2,y2,smoothingCallback);
+	}
+
 	getPixel(x,y){
 		x = this.clampXBounds(x);
 		y = this.clampYBounds(y);
@@ -372,6 +418,10 @@ class DataGrid{
 
 	runLifeAll(onValue,offValue){
 		this.runLifeRect(0,0,this.width - 1,this.height - 1,onValue,offValue)
+	}
+
+	smoothAll(valuesGroup,rulesSet){
+		this.smoothRect(0,0,this.width - 1,this.height - 1,valuesGroup,rulesSet);
 	}
 
 }
