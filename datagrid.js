@@ -1,8 +1,8 @@
 // HONEY-DO LIST
 //
+// Mask by value
 // Shift
 // Rotate
-// Run Smoothing
 // Force paths
 // Draw polygon
 // Draw better lines
@@ -225,6 +225,26 @@ class DataGrid{
 		this.runRect(x1,y1,x2,y2,smoothingCallback);
 	}
 
+	getMaskRect(x1,y1,x2,y2,values,invert,mask){
+
+		values = values.constructor.name == "Array" ? values : [values];
+		invert = (invert == true) ? invert : false;
+		var maskGrid = new DataGrid(x2 - x1 + 1, y2 - y1 + 1)
+
+		function maskingCallback(selectValue,rectX,rectY){
+			if (values.indexOf(selectValue) != -1){
+				var maskValue = (invert) ? null : 1; 
+			} else {
+				var maskValue = (invert) ? 1 : null;
+			}
+			maskGrid.set(rectX,rectY,maskValue);
+			return selectValue;
+		};
+
+		this.forRect(x1,y1,x2,y2,maskingCallback,mask);
+		return maskGrid.data;
+	}
+
 	getPixel(x,y){
 		x = this.clampXBounds(x);
 		y = this.clampYBounds(y);
@@ -356,7 +376,12 @@ class DataGrid{
 			return null;
 		}
 
-		this.data[y][x] = value;
+		if( typeof(value) != 'undefined'){
+			this.data[y][x] = value;
+		} else {
+			console.log('cannot set pixel to undefined');
+		}
+		
 		return this.data[y][x];
 	}
 
@@ -405,11 +430,11 @@ class DataGrid{
 	}
 
 	fillAll(value,mask){
-		this.fillRect(0,0,this.width - 1, this.height - 1, value)
+		this.fillRect(0,0,this.width - 1, this.height - 1, value,mask)
 	}
 
 	clone(){
-		this.cloneFromRect(0, 0, this.width - 1, this.height - 1, this.wrapX, this.wrapY)
+		return this.cloneFromRect(0, 0, this.width - 1, this.height - 1, this.wrapX, this.wrapY)
 	}
 
 	runAll(callback){
@@ -422,6 +447,10 @@ class DataGrid{
 
 	smoothAll(valuesGroup,rulesSet){
 		this.smoothRect(0,0,this.width - 1,this.height - 1,valuesGroup,rulesSet);
+	}
+
+	getMaskAll(values,invert,mask){
+		return this.getMaskRect(0,0,this.width - 1,this.height - 1,values,invert,mask);
 	}
 
 }
