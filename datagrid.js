@@ -1,9 +1,7 @@
 // HONEY-DO LIST
 //
-
-// Draw better lines
-// Draw/For Path
 // Expand/Contract selection
+// Add/remove/get/for/fill columns/rows
 // Force pathing(maze functions)
 
 
@@ -37,6 +35,8 @@ class DataGrid{
 		}
 	}
 
+	// getter functions
+
 	get height(){
 		return this.data.length;
 	}
@@ -45,29 +45,7 @@ class DataGrid{
 		return this.data[0].length;
 	}
 
-	toString(){
-		return JSON.stringify(this.data);
-	}
-
-	clampXBounds(x){
-		var maxX = this.width - 1;
-
-		if (( x < 0 || x > maxX ) && this.wrapX){
-			x = Math.abs( maxX - Math.abs(x) + 1);
-		}
-
-		return x;
-	}
-
-	clampYBounds(y){
-		var maxY = this.height - 1;
-
-		if (( y < 0 || y > maxY ) && this.wrapY){
-			y = Math.abs( maxY - Math.abs(y) + 1);
-		}
-
-		return y;
-	}
+	// helper class functions
 
 	static fromString(JSONstring){
 		var dataArray = JSON.parse(JSONstring);
@@ -105,19 +83,198 @@ class DataGrid{
 		return Math.sqrt( Math.pow(dY,2) + Math.pow(dX,2) );
 	}
 
-	static invertMask(mask){
+	// masking class functions
+
+	static cleanMask(mask,invert){
 		if (!DataGrid.isValidData(mask)){
 			console.log('invert mask can only be applied to an array of arrays');
 			return;
-		}
+		};
 
 		var tempGrid = new DataGrid( mask[0].length, mask.length, mask);
 		function inversionCallback(value){
-			return (value == null) ? 1 : null;
+			if (invert == true){
+				return (value == null) ? 1 : null;
+			} else {
+				return (value == null) ? null : 1;
+			}
 		}
 		tempGrid.forAll(inversionCallback);
 		return tempGrid.data;
 	}
+
+	static invertMask(mask){
+		return cleanMask(mask,true);
+	}
+
+	static contractMask(mask, pixels){
+		if (!DataGrid.isValidData(mask)){
+			console.log('contract mask can only be applied to an array of arrays');
+			return;
+		};
+		pixels = (typeof(pixels) == 'undefined') ? 1 : pixels;
+
+		var tempGrid = new DataGrid( mask[0].length, mask.length, DataGrid.cleanMask(mask));
+		var contractionRules = [
+			[["outside","outside","outside"],["outside",null,"outside"],["outside","group","outside"]],
+			[["group","ignore","ignore"],["ignore",null,"ignore"],["ignore","ignore","outside"]],
+			[["ignore","group","ignore"],["ignore",null,"ignore"],["ignore","outside","ignore"]],
+			[["ignore","ignore","group"],["ignore",null,"ignore"],["outside","ignore","ignore"]],
+			[["ignore","ignore","ignore"],["outside",null,"group"],["ignore","ignore","ignore"]],
+			[["outside","ignore","ignore"],["ignore",null,"ignore"],["ignore","ignore","group"]],
+			[["ignore","outside","ignore"],["ignore",null,"ignore"],["ignore","group","ignore"]],
+			[["ignore","ignore","outside"],["ignore",null,"ignore"],["group","ignore","ignore"]],
+			[["ignore","ignore","ignore"],["group",null,"outside"],["ignore","ignore","ignore"]],
+			[["outside","ignore","ignore"],["ignore",null,"ignore"],["ignore","ignore","outside"]],
+			[["ignore","outside","ignore"],["ignore",null,"ignore"],["ignore","outside","ignore"]],
+			[["ignore","ignore","outside"],["ignore",null,"ignore"],["outside","ignore","ignore"]],
+			[["ignore","ignore","ignore"],["outside",null,"outside"],["ignore","ignore","ignore"]]
+		];
+		for (var i = 0; i < pixels; i++) {
+			tempGrid.smoothAll([1],contractionRules,tempGrid.data);
+		}
+		return tempGrid.data;
+	}
+
+	static expandMask(mask, pixels){
+		if (!DataGrid.isValidData(mask)){
+			console.log('expand mask can only be applied to an array of arrays');
+			return;
+		};
+		pixels = (typeof(pixels) == 'undefined') ? 1 : pixels;
+
+		var tempGrid = new DataGrid( mask[0].length, mask.length, DataGrid.cleanMask(mask));
+		var expansionRules = [
+			[["outside","outside","outside"],["outside",1,"outside"],["outside","group","outside"]],
+			[["group","ignore","ignore"],["ignore",1,"ignore"],["ignore","ignore","outside"]],
+			[["ignore","group","ignore"],["ignore",1,"ignore"],["ignore","outside","ignore"]],
+			[["ignore","ignore","group"],["ignore",1,"ignore"],["outside","ignore","ignore"]],
+			[["ignore","ignore","ignore"],["outside",1,"group"],["ignore","ignore","ignore"]],
+			[["outside","ignore","ignore"],["ignore",1,"ignore"],["ignore","ignore","group"]],
+			[["ignore","outside","ignore"],["ignore",1,"ignore"],["ignore","group","ignore"]],
+			[["ignore","ignore","outside"],["ignore",1,"ignore"],["group","ignore","ignore"]],
+			[["ignore","ignore","ignore"],["group",1,"outside"],["ignore","ignore","ignore"]],
+			[["outside","ignore","ignore"],["ignore",1,"ignore"],["ignore","ignore","outside"]],
+			[["ignore","outside","ignore"],["ignore",1,"ignore"],["ignore","outside","ignore"]],
+			[["ignore","ignore","outside"],["ignore",1,"ignore"],["outside","ignore","ignore"]],
+			[["ignore","ignore","ignore"],["outside",1,"outside"],["ignore","ignore","ignore"]]
+		];
+		for (var i = 0; i < pixels; i++) {
+			tempGrid.smoothAll([1],expansionRules,tempGrid.data);
+		}
+		return tempGrid.data;
+	}
+
+	// Helper functions
+
+	toString(){
+		return JSON.stringify(this.data);
+	}
+
+	clampXBounds(x){
+		var maxX = this.width - 1;
+
+		if (( x < 0 || x > maxX ) && this.wrapX){
+			x = Math.abs( maxX - Math.abs(x) + 1);
+		}
+
+		return x;
+	}
+
+	clampYBounds(y){
+		var maxY = this.height - 1;
+
+		if (( y < 0 || y > maxY ) && this.wrapY){
+			y = Math.abs( maxY - Math.abs(y) + 1);
+		}
+
+		return y;
+	}
+
+	// get/set functions
+
+	getPixel(x,y){
+		x = this.clampXBounds(x);
+		y = this.clampYBounds(y);
+		if ( x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1){
+			return null;
+		} else {
+			return this.data[y][x];
+		}
+	}
+
+	get(x,y,x2,y2){
+		if (typeof(x2) == "undefined" || typeof(y2) == "undefined"){
+			return this.getPixel(x,y);
+		} else {
+			var dataArray = new Array(y2 - y + 1);
+			var getterCallback = function(value,boxX,boxY,x,y){
+				if(typeof(dataArray[boxY]) == "undefined"){
+					dataArray[boxY] = new Array(x2 - x + 1);
+				}
+				dataArray[boxY][boxX] = value;
+				return value;
+			}
+			this.forRect(x,y,x2,y2,getterCallback);
+			return dataArray;
+		}
+	}
+
+	getMask(x1,y1,x2,y2,values,invert,mask){
+
+		values = values.constructor.name == "Array" ? values : [values];
+		invert = (invert == true) ? invert : false;
+		var maskGrid = new DataGrid(x2 - x1 + 1, y2 - y1 + 1)
+
+		function maskingCallback(selectValue,rectX,rectY){
+			if (values.indexOf(selectValue) != -1){
+				var maskValue = (invert) ? null : 1; 
+			} else {
+				var maskValue = (invert) ? 1 : null;
+			}
+			maskGrid.set(rectX,rectY,maskValue);
+			return selectValue;
+		};
+
+		this.forRect(x1,y1,x2,y2,maskingCallback,mask);
+		return maskGrid.data;
+	}
+
+	getStats(x,y,x2,y2){
+		if ( typeof(x2) == "undefined" || typeof(y2) == "undefined" ){
+			console.log("getStats requires two points");
+			return;
+		}
+		var tempGrid = new this.cloneFromRect(x,y,x2,y2);
+		return tempGrid.allStats();
+	}
+
+	getNeighbors(x,y){
+		return this.get(x - 1, y - 1, x + 1, y + 1);
+	}
+
+	getNeighborsStats(x,y){
+		return new DataGrid(3,3,this.getNeighbors(x,y)).allStats();
+	}
+
+	set(x,y, value){
+		x = this.clampXBounds(x);
+		y = this.clampYBounds(y);
+
+		if ( x < 0 || x > this.width - 1 || y < 0 || y > this.height - 1){
+			return null;
+		}
+
+		if( typeof(value) != 'undefined'){
+			this.data[y][x] = value;
+		} else {
+			console.log('cannot set pixel to undefined');
+		}
+		
+		return this.data[y][x];
+	}
+
+	// Rectangle functions
 
 	forRect(x1,y1,x2,y2,callback,mask,edgesOnly){
 		var maskExists = DataGrid.isValidData(mask);
@@ -201,8 +358,8 @@ class DataGrid{
 			return;
 		}
 
-		if(rulesSet.constructor.name != "Array" || rulesSet[0].constructor.name != "DataGrid" ){
-			console.log("rules set needs to be an array of DataGrids");
+		if(rulesSet.constructor.name != "Array" || (rulesSet[0].constructor.name != "DataGrid" && !(rulesSet[0].constructor.name == "Array" && rulesSet[0][0].constructor.name == "Array")) ){
+			console.log("rules set needs to be an array of DataGrids or DataGrid data arrays");
 			return;
 		}
 
@@ -228,10 +385,11 @@ class DataGrid{
 
 		function smoothingCallback(originalValue,rectX,rectY,x1,y1){
 			for (var i = 0; i < rulesSet.length; i++) {
+				var ruleToCheck = (rulesSet[i].constructor.name == "DataGrid") ? rulesSet[i] : new DataGrid(rulesSet[i][0].length, rulesSet[i].length, rulesSet[i]);
 				matchesRule = true;
-				checkRule(rulesSet[i], x1 + rectX, y1 + rectY);
+				checkRule(ruleToCheck, x1 + rectX, y1 + rectY);
 				if (matchesRule != false){
-					return rulesSet[i].get(1,1);
+					return ruleToCheck.get(1,1);
 					break;
 				}
 			}
@@ -239,26 +397,6 @@ class DataGrid{
 		}
 
 		this.runRect(x1,y1,x2,y2,smoothingCallback,mask);
-	}
-
-	getMaskRect(x1,y1,x2,y2,values,invert,mask){
-
-		values = values.constructor.name == "Array" ? values : [values];
-		invert = (invert == true) ? invert : false;
-		var maskGrid = new DataGrid(x2 - x1 + 1, y2 - y1 + 1)
-
-		function maskingCallback(selectValue,rectX,rectY){
-			if (values.indexOf(selectValue) != -1){
-				var maskValue = (invert) ? null : 1; 
-			} else {
-				var maskValue = (invert) ? 1 : null;
-			}
-			maskGrid.set(rectX,rectY,maskValue);
-			return selectValue;
-		};
-
-		this.forRect(x1,y1,x2,y2,maskingCallback,mask);
-		return maskGrid.data;
 	}
 
 	shiftRect(x1,y1,x2,y2,dX,dY,background,mask){
@@ -277,32 +415,7 @@ class DataGrid{
 		this.stamp(x1,y1,rotateGrid);
 	}
 
-	getPixel(x,y){
-		x = this.clampXBounds(x);
-		y = this.clampYBounds(y);
-		if ( x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1){
-			return null;
-		} else {
-			return this.data[y][x];
-		}
-	}
-
-	get(x,y,x2,y2){
-		if (typeof(x2) == "undefined" || typeof(y2) == "undefined"){
-			return this.getPixel(x,y);
-		} else {
-			var dataArray = new Array(y2 - y + 1);
-			var getterCallback = function(value,boxX,boxY,x,y){
-				if(typeof(dataArray[boxY]) == "undefined"){
-					dataArray[boxY] = new Array(x2 - x + 1);
-				}
-				dataArray[boxY][boxX] = value;
-				return value;
-			}
-			this.forRect(x,y,x2,y2,getterCallback);
-			return dataArray;
-		}
-	}
+	// circle functions
 
 	forCirc(centerX,centerY,radius,callback,mask,edgesOnly){
 		radius = Math.floor(radius);
@@ -341,6 +454,8 @@ class DataGrid{
 		}, mask, true);
 	}
 
+	// line/path functions
+
 	forLine(x1,y1,x2,y2,callback,mask){
 		var defaultValue = DataGrid.isValidData(mask) ? mask : 1;
 		var lineMask = new DataGrid( Math.abs(x2 - x1) + 1, Math.abs(y2 - y1) + 1, defaultValue, true, true);
@@ -376,6 +491,23 @@ class DataGrid{
 		};
 		this.forLine(x1,y1,x2,y2,fillCallback,mask);
 	}
+
+	forPath(pointsData,callback,mask){
+		for (var i = 0; i < pointsData.length - 1; i++) {
+			var pointA = pointsData[i];
+			var pointB =pointsData[i + 1];
+			this.forLine(pointA[0],pointA[1],pointB[0],pointB[1],callback,mask);
+		}
+	}
+
+	drawPath(pointsData,value,mask){
+		var fillCallback = function(){
+			return DataGrid.findValue(value);
+		};
+		this.forPath(pointsData,fillCallback,mask);
+	}
+
+	// polygon functions
 
 	forPolygon(pointsData,callback,mask){
 		if( !DataGrid.isValidData(pointsData) || pointsData[0].length != 2){
@@ -436,67 +568,7 @@ class DataGrid{
 		this.forPolygon(pointsData,fillCallback,mask);
 	}
 
-	forPath(pointsData,callback,mask){
-		for (var i = 0; i < pointsData.length - 1; i++) {
-			var pointA = pointsData[i];
-			var pointB =pointsData[i + 1];
-			this.forLine(pointA[0],pointA[1],pointB[0],pointB[1],callback,mask);
-		}
-	}
-
-	drawPath(pointsData,value,mask){
-		var fillCallback = function(){
-			return DataGrid.findValue(value);
-		};
-		this.forPath(pointsData,fillCallback,mask);
-	}
-
-	allStats(){
-		var statsObject = {};
-		var tempCallBack = function(value){
-			if (typeof(statsObject[value]) == "undefined"){
-				statsObject[value] = 0;
-			}
-			statsObject[value]++;
-			return value;
-		}
-		this.forAll(tempCallBack);
-		return statsObject;
-	}
-
-	getStats(x,y,x2,y2){
-		if ( typeof(x2) == "undefined" || typeof(y2) == "undefined" ){
-			console.log("getStats requires two points");
-			return;
-		}
-		var tempGrid = new this.cloneFromRect(x,y,x2,y2);
-		return tempGrid.allStats();
-	}
-
-	getNeighbors(x,y){
-		return this.get(x - 1, y - 1, x + 1, y + 1);
-	}
-
-	getNeighborsStats(x,y){
-		return new DataGrid(3,3,this.getNeighbors(x,y)).allStats();
-	}
-
-	set(x,y, value){
-		x = this.clampXBounds(x);
-		y = this.clampYBounds(y);
-
-		if ( x < 0 || x > this.width - 1 || y < 0 || y > this.height - 1){
-			return null;
-		}
-
-		if( typeof(value) != 'undefined'){
-			this.data[y][x] = value;
-		} else {
-			console.log('cannot set pixel to undefined');
-		}
-		
-		return this.data[y][x];
-	}
+	// 'stamp' functions
 
 	stamp(x,y,data,mask){
 
@@ -538,6 +610,21 @@ class DataGrid{
 		});
 	}
 
+	// 'all' aliases
+
+	allStats(){
+		var statsObject = {};
+		var tempCallBack = function(value){
+			if (typeof(statsObject[value]) == "undefined"){
+				statsObject[value] = 0;
+			}
+			statsObject[value]++;
+			return value;
+		}
+		this.forAll(tempCallBack);
+		return statsObject;
+	}
+
 	forAll(callback,mask){
 		this.forRect(0,0,this.width - 1, this.height - 1, callback,mask);
 	}
@@ -563,7 +650,7 @@ class DataGrid{
 	}
 
 	getMaskAll(values,invert,mask){
-		return this.getMaskRect(0,0,this.width - 1,this.height - 1,values,invert,mask);
+		return this.getMask(0,0,this.width - 1,this.height - 1,values,invert,mask);
 	}
 
 	shiftAll(dX,dY,background,mask){
