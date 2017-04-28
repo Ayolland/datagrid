@@ -349,21 +349,28 @@ class DataGrid{
 		var yMin = Math.min(y1,y2);
 		var yMax = Math.max(y1,y2);
 		var slope = (y2 - y1) / (x2 - x1);
-		if (slope == 0){
-			this.forRect(xMin,yMin,xMax,yMax,callback);
-			return;
+		var xIntercept = (x1 - xMin) - (y1 - yMin) / slope;
+
+		var lineCallback = function(value, boxX, boxY){
+			if(!isFinite(slope)){
+				if (xMin + boxX == x1){
+					return callback(value, boxX, boxY);
+				}
+			} else if (slope == 0){
+				if (yMin + boxY == y1){
+					return callback(value, boxX, boxY);
+				}
+			} else {
+				if ( Math.abs((boxX + 0.5) - (((boxY + 0.5) / slope) + xIntercept)) <= 0.5 ){
+					return callback(value, boxX, boxY);
+				}
+			}
 		}
-		var lineCallback = function(maskValue, boxX, boxY){
-			var postiveSlopeFix = (boxX == Math.round(boxY / slope)) ? 1 : null;
-			var negativeSlopeHack = (boxX == lineMask.clampYBounds(Math.round((boxY + 1) / slope))) ? 1 : null;
-			return slope > 0 ? postiveSlopeFix : negativeSlopeHack;
-		}
-		lineMask.forAll(lineCallback);
 		
-		this.forRect(xMin,yMin,xMax,yMax,callback,lineMask.data);
+		this.forRect(xMin,yMin,xMax,yMax,lineCallback,mask);
 	}
 
-	fillLine(x1,y1,x2,y2,value,mask){
+	drawLine(x1,y1,x2,y2,value,mask){
 		var fillCallback = function(){
 			return DataGrid.findValue(value);
 		};
@@ -392,7 +399,7 @@ class DataGrid{
 		var previousSlope = (pointsData[1][1] - pointsData[0][1])/(pointsData[1][0] - pointsData[0][0]);
 		var chopDirection = (previousSlope > 0) ? "left" : "right";
 
-		for (var i = 0; i <= pointsData.length - 2; i++) {
+		for (var i = 0; i < pointsData.length - 1; i++) {
 			var pointA = [pointsData[i][0] - x1, pointsData[i][1] - y1];
 			var pointB = [pointsData[i + 1][0] - x1, pointsData[i + 1][1] - y1];
 			var slope = (pointB[1] - pointA[1])/(pointB[0] - pointA[0]);
@@ -427,6 +434,21 @@ class DataGrid{
 			return DataGrid.findValue(value);
 		};
 		this.forPolygon(pointsData,fillCallback,mask);
+	}
+
+	forPath(pointsData,callback,mask){
+		for (var i = 0; i < pointsData.length - 1; i++) {
+			var pointA = pointsData[i];
+			var pointB =pointsData[i + 1];
+			this.forLine(pointA[0],pointA[1],pointB[0],pointB[1],callback,mask);
+		}
+	}
+
+	drawPath(pointsData,value,mask){
+		var fillCallback = function(){
+			return DataGrid.findValue(value);
+		};
+		this.forPath(pointsData,fillCallback,mask);
 	}
 
 	allStats(){
