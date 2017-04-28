@@ -1,9 +1,10 @@
 // HONEY-DO LIST
 //
-// Fill/For polygon
+
 // Draw better lines
 // Draw/For Path
-// Force paths
+// Expand/Contract selection
+// Force pathing(maze functions)
 
 
 class DataGrid{
@@ -369,38 +370,64 @@ class DataGrid{
 		this.forLine(x1,y1,x2,y2,fillCallback,mask);
 	}
 
-	// forPolygon(pointsData,callback,mask){
-	// 	if( !DataGrid.isValidData(pointsData) || pointsData[0].length != 2){
-	// 		console.log("point data for polygons needs to be an Array of 2-length Arrays");
-	// 		return;
-	// 	}
+	forPolygon(pointsData,callback,mask){
+		if( !DataGrid.isValidData(pointsData) || pointsData[0].length != 2){
+			console.log("point data for polygons needs to be an Array of 2-length Arrays");
+			return;
+		}
 
-	// 	var xValues = pointsData.map(function(pointArray){
-	// 		return pointArray[0];
-	// 	});
-	// 	var yValues = pointsData.map(function(pointArray){
-	// 		return pointArray[1];
-	// 	});
-	// 	pointsData.push(pointsData[0]);
-	// 	var x1 = Math.min.apply(null, xValues);
-	// 	var y1 = Math.min.apply(null, yValues);
-	// 	var x2 = Math.max.apply(null, xValues);
-	// 	var y2 = Math.max.apply(null, yValues);
-	// 	var previousMaskData = (DataGrid.isValidData(mask))? mask : 1;
-	// 	var maskGrid = new DataGrid (x2 - x1 + 1, y2 - y1 + 1, previousMaskData);
+		var xValues = pointsData.map(function(pointArray){
+			return pointArray[0];
+		});
+		var yValues = pointsData.map(function(pointArray){
+			return pointArray[1];
+		});
+		pointsData.push(pointsData[0]);
+		var x1 = Math.min.apply(null, xValues);
+		var y1 = Math.min.apply(null, yValues);
+		var x2 = Math.max.apply(null, xValues);
+		var y2 = Math.max.apply(null, yValues);
+		var previousMaskData = (DataGrid.isValidData(mask))? mask : 1;
+		var maskGrid = new DataGrid (x2 - x1 + 1, y2 - y1 + 1, previousMaskData);
+		var previousSlope = (pointsData[1][1] - pointsData[0][1])/(pointsData[1][0] - pointsData[0][0]);
+		var chopDirection = (previousSlope > 0) ? "left" : "right";
 
-	// 	var chopCallback = function(maskValue, boxX, boxY){
+		for (var i = 0; i <= pointsData.length - 2; i++) {
+			var pointA = [pointsData[i][0] - x1, pointsData[i][1] - y1];
+			var pointB = [pointsData[i + 1][0] - x1, pointsData[i + 1][1] - y1];
+			var slope = (pointB[1] - pointA[1])/(pointB[0] - pointA[0]);
+			var xIntercept = pointA[0] - pointA[1] / slope;
+			chopDirection = (previousSlope / slope > 0) ? chopDirection : (chopDirection == "left") ? "right" : "left";
 
-	// 		var postiveSlopeFix = (boxX < Math.round(boxY / slope)) ? 1 : null;
-	// 		var negativeSlopeHack = (boxX > lineMask.clampYBounds(Math.round((boxY + 1) / slope))) ? 1 : null;
-	// 		return slope > 0 ? postiveSlopeFix : negativeSlopeHack;
-	// 	}
+			function chopCallback(maskValue, boxX, boxY){
+				if(!isFinite(slope)){
+					var chopLeft = (boxX >= pointA[0]) ? 1 : null;
+					var chopRight = (boxX <= pointA[0]) ? 1 : null;
+				} else if (slope == 0){
+					var chopLeft = (boxY >= pointA[1]) ? 1 : null;
+					var chopRight = (boxY <= pointA[1]) ? 1 : null;
+				} else {
+					var chopLeft = (boxX >= Math.round(boxY / slope) + xIntercept) ? 1 : null;
+					var chopRight = (boxX <= Math.round(boxY / slope) + xIntercept) ? 1 : null;
+				}
+				return (chopDirection == "left") ? chopLeft : chopRight;
+			}
 
-	// 	for (var i = pointsData.length - 2; i >= 0; i--) {
-	// 		pointsData[i]
-	// 	}
+			maskGrid.forAll(chopCallback,maskGrid.data)
 
-	// }
+			previousSlope = slope;
+		}
+
+		this.forRect(x1,y1,x2,y2,callback,maskGrid.data);
+
+	}
+
+	fillPolygon(pointsData,value,mask){
+		var fillCallback = function(){
+			return DataGrid.findValue(value);
+		};
+		this.forPolygon(pointsData,fillCallback,mask);
+	}
 
 	allStats(){
 		var statsObject = {};
@@ -490,7 +517,7 @@ class DataGrid{
 	}
 
 	forAll(callback,mask){
-		this.forRect(0,0,this.width - 1, this.height - 1, callback);
+		this.forRect(0,0,this.width - 1, this.height - 1, callback,mask);
 	}
 
 	fillAll(value,mask){

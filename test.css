@@ -6,6 +6,7 @@ body{
 }
 
 .cell{
+	box-sizing: border-box;
 	background: url('scenery.png') no-repeat no-repeat;
 	display: block;
 	width: 16px;
@@ -14,7 +15,8 @@ body{
 }
 
 .cell:hover{
-	background: black !important;
+    border: 1px white solid;
+	box-shadow: 0 0 5px white inset;
 }
 
 .white{
