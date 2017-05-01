@@ -1,9 +1,8 @@
 // HONEY-DO LIST
 //
-// Expand/Contract selection
+// fix polygons
 // Add/remove/get/for/fill columns/rows
 // Force pathing(maze functions)
-
 
 class DataGrid{
 	

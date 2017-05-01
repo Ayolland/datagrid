@@ -95,7 +95,17 @@
 				smGr2();
 			}
 
-			var testGrid = new DataGrid(20,20,["grass","green","green","green"],true,true);
+			function randomPoint(){
+				var tempX = Math.floor(Math.random() * (testGrid.width - 1));
+				var tempY = Math.floor(Math.random() * (testGrid.height - 1));
+				return [tempX,tempY]
+			}
+
+			function randomTriangle(value){
+				testGrid.fillPolygon([randomPoint(),randomPoint(),randomPoint()],value);
+			}
+
+			var testGrid = new DataGrid(20,20,["blue"],true,true);
 			buildGrid();
 			//smoothGrid();
 			
