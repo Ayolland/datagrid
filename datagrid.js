@@ -145,7 +145,6 @@ class DataGrid{
 
 		var tempGrid = new DataGrid( mask[0].length, mask.length, DataGrid.cleanMask(mask));
 		var expansionRules = [
-			[["outside","outside","outside"],["outside",1,"outside"],["outside","group","outside"]],
 			[["group","ignore","ignore"],["ignore",1,"ignore"],["ignore","ignore","outside"]],
 			[["ignore","group","ignore"],["ignore",1,"ignore"],["ignore","outside","ignore"]],
 			[["ignore","ignore","group"],["ignore",1,"ignore"],["outside","ignore","ignore"]],
@@ -153,14 +152,10 @@ class DataGrid{
 			[["outside","ignore","ignore"],["ignore",1,"ignore"],["ignore","ignore","group"]],
 			[["ignore","outside","ignore"],["ignore",1,"ignore"],["ignore","group","ignore"]],
 			[["ignore","ignore","outside"],["ignore",1,"ignore"],["group","ignore","ignore"]],
-			[["ignore","ignore","ignore"],["group",1,"outside"],["ignore","ignore","ignore"]],
-			[["outside","ignore","ignore"],["ignore",1,"ignore"],["ignore","ignore","outside"]],
-			[["ignore","outside","ignore"],["ignore",1,"ignore"],["ignore","outside","ignore"]],
-			[["ignore","ignore","outside"],["ignore",1,"ignore"],["outside","ignore","ignore"]],
-			[["ignore","ignore","ignore"],["outside",1,"outside"],["ignore","ignore","ignore"]]
+			[["ignore","ignore","ignore"],["group",1,"outside"],["ignore","ignore","ignore"]]
 		];
 		for (var i = 0; i < pixels; i++) {
-			tempGrid.smoothAll([1],expansionRules,tempGrid.data);
+			tempGrid.smoothAll([1],expansionRules);
 		}
 		return tempGrid.data;
 	}
@@ -372,7 +367,7 @@ class DataGrid{
 			rule.forAll(function(ruleCellValue,ruleX,ruleY){
 				var cellIsMatchesGroup = ruleCellValue == "group" && valuesGroup.indexOf(areaToCheck.data[ruleY][ruleX]) != -1;
 				var cellIsMatchesOutside = ruleCellValue == "outside" && valuesGroup.indexOf(areaToCheck.data[ruleY][ruleX]) == -1;
-				var checkingCenterCell = ruleX == 1 && ruleY == 1 && valuesGroup.indexOf(areaToCheck.data[ruleY][ruleX]) != -1;
+				var checkingCenterCell = ruleX == 1 && ruleY == 1;
 				var cellMatchesExactly = ruleCellValue == areaToCheck.data[ruleY][ruleX];
 				if (ruleCellValue == "ignore" || checkingCenterCell || cellIsMatchesGroup || cellMatchesExactly || cellIsMatchesOutside){
 					return ruleCellValue;
@@ -646,7 +641,7 @@ class DataGrid{
 	}
 
 	smoothAll(valuesGroup,rulesSet,mask){
-		this.smoothRect(0,0,this.width - 1,this.height - 1,valuesGroup,rulesSet);
+		this.smoothRect(0,0,this.width - 1,this.height - 1,valuesGroup,rulesSet,mask);
 	}
 
 	getMaskAll(values,invert,mask){
