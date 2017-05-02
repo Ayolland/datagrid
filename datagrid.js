@@ -1,6 +1,6 @@
 // HONEY-DO LIST
 //
-// fix polygons
+// clumping algorithims
 // Add/remove/get/for/fill columns/rows
 // Force pathing(maze functions)
 
@@ -349,7 +349,7 @@ class DataGrid{
 			return oldValue;
 		}
 		this.forRect(x1,y1,x2,y2,injectedCallback,mask);
-		this.stamp(x1,y1,newData);
+		this.stamp(x1,y1,newData,mask);
 	}
 
 	runLifeRect(x1,y1,x2,y2,onValue,offValue,mask){
@@ -436,6 +436,18 @@ class DataGrid{
 		this.fillRect(x1,y1,x2,y2,background);
 		rotateGrid.rotateAll(turns);
 		this.stamp(x1,y1,rotateGrid);
+	}
+
+	clumpRect(x1,y1,x2,y2,selectValues,clearValue,fillValue,mask){
+		if (!DataGrid.isValidData(mask)){
+			mask = this.getMask(x1,y1,x2,y2,selectValues);
+		}
+
+		var clumpingRules = [
+			[["ignore","outside","ignore"],["ignore",clearValue,"ignore"],["ignore","outside","ignore"]],
+			[["ignore","ignore","ignore"],["outside",clearValue,"outside"],["ignore","ignore","ignore"]],
+		];
+		this.smoothRect(x1,y1,x2,y2,selectValues,clumpingRules,mask);
 	}
 
 	// circle functions
@@ -619,7 +631,7 @@ class DataGrid{
 
 		this.forRect(x,y,x2,y2,function(currentValue,stampX,stampY){
 			return data[stampY][stampX];
-		});
+		},mask);
 	}
 
 	stretchStamp(x1,y1,x2,y2,data,mask){
@@ -635,7 +647,7 @@ class DataGrid{
 		x2 = (x2 > x1 + 2) ? x2 : x1 + 2;
 		y2 = (y2 > y1 + 2) ? y2 : y1 + 2;
 
-		this.forRect(x1,y1,x2,y2,function(currentValue,stampX,stampY){
+		this.forRect(x1,y1,x2,y2,function(currentValue,stampX,stampY,mask){
 			var xCoord = (x1 + stampX == x1) ? 0 : (x1 + stampX == x2) ? 2 : 1;
 			var yCoord = (y1 + stampY == y1) ? 0 : (y1 + stampY == y2) ? 2 : 1;
 
@@ -703,6 +715,10 @@ class DataGrid{
 			});
 			this.data = tempGrid.data;
 		}
+	}
+
+	clumpAll(selectValues,clearValue,fillValue,mask){
+		this.clumpRect(0,0,this.width - 1,this.height - 1,selectValues,clearValue,fillValue,mask);
 	}
 
 }

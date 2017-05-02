@@ -19,6 +19,10 @@ body{
 	box-shadow: 0 0 5px white inset;
 }
 
+.null{
+	background: black;
+}
+
 .white{
 	background: white;
 }

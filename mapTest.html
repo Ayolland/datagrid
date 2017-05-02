@@ -65,13 +65,62 @@
 				mapGrid.visuals.fillPolygon([pointA, pointB, pointC],value);
 			}
 
-			function expandValue(x1,y1,x2,y2,value){
+			function randomCircle(x,y,size,value){
+				var xOffset = size - Math.floor( Math.random() * 2 * size);
+				var yOffset = size - Math.floor( Math.random() * 2 * size);
+				var radius = size - Math.max( Math.abs(xOffset), Math.abs(yOffset) );
+				mapGrid.visuals.fillCirc(x + xOffset, y + yOffset, radius, value);
+			}
+
+			function expandValue(x1,y1,x2,y2,value,times){
 				var mask = mapGrid.visuals.getMaskAll(value);
-				mask = DataGrid.expandMask(mask);
+				mask = DataGrid.expandMask(mask,times);
 				mapGrid.visuals.fillRect(x1,y1,x2,y2,value,mask);
 			}
 
+			function seedLand(x1,y1,x2,y2){
+				var centerX = x1 + Math.floor( (x2 - x1) / 2);
+				var centerY = y1 + Math.floor( (y2 - y1) / 2);
+				var landMasses = 5 + Math.floor( Math.random() * 10)
+				for (var i = 0; i < landMasses; i++) {
+					if (Math.random() > 0.5){
+						randomTriangle(centerX,centerY, centerX - x1, ["grass","skip","skip","skip"]);
+					} else {
+						randomCircle(centerX,centerY, centerX - x1, ["grass","skip","skip","skip"]);
+					}
+				}
+			}
+
+			function seedTrees(x1,y1,x2,y2){
+				var mask = mapGrid.visuals.getMask(x1,y1,x2,y2,"grass");
+				mapGrid.visuals.fillRect(x1,y1,x2,y2,["green","green","green","skip"],mask);			}
+
+			function seedLandBig(){
+				seedLand(1,1,mapGrid.visuals.width - 2,mapGrid.visuals.height - 2);
+			}
+
+			function seedTreesBig(){
+				seedTrees(1,1,mapGrid.visuals.width - 2,mapGrid.visuals.height - 2);
+			}
+
+			function expandLandBig(){
+				expandValue(1,1,mapGrid.visuals.width - 2,mapGrid.visuals.height - 2, "grass");
+				expandValue(1,1,mapGrid.visuals.width - 2,mapGrid.visuals.height - 2, "blue");
+			}
+
+			function clearAll(){
+				mapGrid.visuals.fillAll("blue");
+			};
+
+			function newBigContinent(){
+				clearAll();
+				seedLandBig();
+				expandLandBig();
+				seedTreesBig();
+			}
+
 			buildGrid();
+			newBigContinent();
 			
 			drawCycle = setInterval(drawMap, 500);
 		</script>
