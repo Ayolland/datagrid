@@ -12,6 +12,7 @@
 			mapGrid.terrain = new DataGrid(40,40,["blue"],true,true);
 			mapGrid.visuals = new DataGrid(40,40,["blue"],true,true);
 			var mapDisplay = document.getElementById('grid-display');
+			drawStep = 0;
 
 			function buildGrid(){
 				mapGrid.currentDisplayWidth = mapGrid.terrain.width;
@@ -30,7 +31,13 @@
 				return value;
 			};
 
+			function copyOverMap(){
+				mapGrid.visuals = mapGrid.terrain.clone();
+			}
+
 			function drawMap(){
+				followInstructions();
+
 				cellcounter = 0;
 				if (mapGrid.terrain.width != mapGrid.currentDisplayWidth || mapGrid.terrain.height != mapGrid.currentDisplayHeight){
 					buildGrid();
@@ -62,20 +69,20 @@
 					( Math.abs(pointA[0]-pointC[0]) < (size / 4)) || ( Math.abs(pointA[1]-pointC[1]) < (size / 4))){
 					pointC = randomPointFromCenter(x,y,size);
 				}
-				mapGrid.visuals.fillPolygon([pointA, pointB, pointC],value);
+				mapGrid.terrain.fillPolygon([pointA, pointB, pointC],value);
 			}
 
 			function randomCircle(x,y,size,value){
 				var xOffset = size - Math.floor( Math.random() * 2 * size);
 				var yOffset = size - Math.floor( Math.random() * 2 * size);
 				var radius = size - Math.max( Math.abs(xOffset), Math.abs(yOffset) );
-				mapGrid.visuals.fillCirc(x + xOffset, y + yOffset, radius, value);
+				mapGrid.terrain.fillCirc(x + xOffset, y + yOffset, radius, value);
 			}
 
 			function expandValue(x1,y1,x2,y2,value,times){
-				var mask = mapGrid.visuals.getMaskAll(value);
+				var mask = mapGrid.terrain.getMaskAll(value);
 				mask = DataGrid.expandMask(mask,times);
-				mapGrid.visuals.fillRect(x1,y1,x2,y2,value,mask);
+				mapGrid.terrain.fillRect(x1,y1,x2,y2,value,mask);
 			}
 
 			function seedLand(x1,y1,x2,y2){
@@ -92,24 +99,32 @@
 			}
 
 			function seedTrees(x1,y1,x2,y2){
-				var mask = mapGrid.visuals.getMask(x1,y1,x2,y2,"grass");
-				mapGrid.visuals.fillRect(x1,y1,x2,y2,["green","green","green","skip"],mask);			}
+				var mask = mapGrid.terrain.getMask(x1,y1,x2,y2,"grass");
+				mapGrid.terrain.fillRect(x1,y1,x2,y2,["green","green","skip"],mask);			}
 
 			function seedLandBig(){
-				seedLand(1,1,mapGrid.visuals.width - 2,mapGrid.visuals.height - 2);
+				seedLand(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2);
 			}
 
 			function seedTreesBig(){
-				seedTrees(1,1,mapGrid.visuals.width - 2,mapGrid.visuals.height - 2);
+				seedTrees(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2);
+			}
+
+			function clumpTrees(x1,y1,x2,y2){
+				mapGrid.terrain.clumpRect(x1,y1,x2,y2,["green"],"grass");
+			}
+
+			function clumpTreesBig(){
+				clumpTrees(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2);
 			}
 
 			function expandLandBig(){
-				expandValue(1,1,mapGrid.visuals.width - 2,mapGrid.visuals.height - 2, "grass");
-				expandValue(1,1,mapGrid.visuals.width - 2,mapGrid.visuals.height - 2, "blue");
+				expandValue(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2, "grass");
+				expandValue(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2, "blue");
 			}
 
 			function clearAll(){
-				mapGrid.visuals.fillAll("blue");
+				mapGrid.terrain.fillAll("blue");
 			};
 
 			function newBigContinent(){
@@ -117,10 +132,29 @@
 				seedLandBig();
 				expandLandBig();
 				seedTreesBig();
+			};
+
+			function followInstructions(){
+				if( drawStep < instructions.length){
+					instructions[drawStep]();
+					drawStep++;
+				}
 			}
 
+			instructions = [
+				clearAll,
+				copyOverMap,
+				seedLandBig,
+				copyOverMap,
+				expandLandBig,
+				copyOverMap,
+				seedTreesBig,
+				copyOverMap,
+				clumpTreesBig,
+				copyOverMap
+			]
+
 			buildGrid();
-			newBigContinent();
 			
 			drawCycle = setInterval(drawMap, 500);
 		</script>
