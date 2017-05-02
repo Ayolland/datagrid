@@ -82,6 +82,31 @@ class DataGrid{
 		return Math.sqrt( Math.pow(dY,2) + Math.pow(dX,2) );
 	}
 
+	static sortPointsClockwiseAroundPoint(pointsData,centerPoint){
+		if (!DataGrid.isValidData(pointsData)){
+			console.log('points data provided must be an array of arrays');
+			return;
+		};
+
+		if ( centerPoint.constructor.name != "Array" || centerPoint.length != 2){
+			console.log('center point must be a 2-length array');
+			return;
+		};
+
+		function sortFunction(pointA,pointB){
+			if (centerPoint[0] == pointA[0] && centerPoint[1] == pointA[1]){
+				console.log('points data includes center point!')
+				return 0;
+			}
+			var sortValA = Math.atan2(pointA[1] - centerPoint[1], pointA[0] - centerPoint[0]);
+			var sortValB = Math.atan2(pointB[1] - centerPoint[1], pointB[0] - centerPoint[0]);
+			if (sortValA == sortValB){ return 0 };
+			var sortDiff = sortValA - sortValB;
+			return ( sortDiff / Math.abs(sortDiff));
+		}
+		return pointsData.sort(sortFunction);
+	}
+
 	// masking class functions
 
 	static cleanMask(mask,invert){
@@ -515,22 +540,31 @@ class DataGrid{
 		var yValues = pointsData.map(function(pointArray){
 			return pointArray[1];
 		});
-		pointsData.push(pointsData[0]);
 		var x1 = Math.min.apply(null, xValues);
 		var y1 = Math.min.apply(null, yValues);
 		var x2 = Math.max.apply(null, xValues);
 		var y2 = Math.max.apply(null, yValues);
+		var centerPoint = [Math.floor((x2 - x1) / 2),Math.floor((y2 - y1) / 2)];
+
+		pointsData = DataGrid.sortPointsClockwiseAroundPoint(pointsData, centerPoint);
+		pointsData.push(pointsData[0]);
+		
 		var previousMaskData = (DataGrid.isValidData(mask))? mask : 1;
 		var maskGrid = new DataGrid (x2 - x1 + 1, y2 - y1 + 1, previousMaskData);
 		var previousSlope = (pointsData[1][1] - pointsData[0][1])/(pointsData[1][0] - pointsData[0][0]);
-		var chopDirection = (previousSlope > 0) ? "left" : "right";
+		var realtiveMidY = Math.floor(maskGrid.height / 2);
+		var chopDirection = (pointsData[0][1] != 0 && pointsData[1][1] != 0) ? "left" : "right";
 
 		for (var i = 0; i < pointsData.length - 1; i++) {
 			var pointA = [pointsData[i][0] - x1, pointsData[i][1] - y1];
 			var pointB = [pointsData[i + 1][0] - x1, pointsData[i + 1][1] - y1];
-			var slope = (pointB[1] - pointA[1])/(pointB[0] - pointA[0]);
+			var slope = (pointB[1] - pointA[1])/(pointB[0] - pointA[0]) * 1;
 			var xIntercept = pointA[0] - pointA[1] / slope;
-			chopDirection = (previousSlope / slope > 0) ? chopDirection : (chopDirection == "left") ? "right" : "left";
+			if (pointA[1] == 0 && pointB[1] != 0 && chopDirection == "left"){
+				chopDirection = "right";
+			} else if (pointA[1] == maskGrid.height - 1 && pointB[1] != maskGrid.height - 1 && chopDirection == "right"){
+				chopDirection = "left";
+			}
 
 			function chopCallback(maskValue, boxX, boxY){
 				if(!isFinite(slope)){
@@ -546,6 +580,7 @@ class DataGrid{
 				return (chopDirection == "left") ? chopLeft : chopRight;
 			}
 
+			console.log('A: '+pointA[0]+","+pointA[1]+" B: "+pointB[0]+","+pointB[1]+" Slope: "+slope+" Chop: "+chopDirection);
 			maskGrid.forAll(chopCallback,maskGrid.data)
 
 			previousSlope = slope;

@@ -102,7 +102,9 @@
 			}
 
 			function randomTriangle(value){
-				testGrid.fillPolygon([randomPoint(),randomPoint(),randomPoint()],value);
+				var points  = [randomPoint(),randomPoint(),randomPoint()]
+				testGrid.fillPolygon(points,value);
+				return points.toString();
 			}
 
 			var testGrid = new DataGrid(20,20,["blue"],true,true);
