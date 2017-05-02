@@ -1,0 +1,79 @@
+<html>
+	<head>
+		<title>Map Generator test</title>
+		<link href="test.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="grid-display"></div>
+
+		<script src="datagrid.js"></script>
+		<script>
+			var mapGrid = {};
+			mapGrid.terrain = new DataGrid(40,40,["blue"],true,true);
+			mapGrid.visuals = new DataGrid(40,40,["blue"],true,true);
+			var mapDisplay = document.getElementById('grid-display');
+
+			function buildGrid(){
+				mapGrid.currentDisplayWidth = mapGrid.terrain.width;
+				mapGrid.currentDisplayHeight = mapGrid.terrain.height;
+				mapDisplay.setAttribute("style","width: "+(mapGrid.currentDisplayWidth)*16+"px;")
+				while (mapDisplay.hasChildNodes()) {
+				    mapDisplay.removeChild(mapDisplay.lastChild);
+				}
+				mapGrid.visuals.forAll(addCellToMap);
+			};
+
+			function addCellToMap(value){
+				var newCell = document.createElement("div");
+				newCell.className = "cell " + value;
+				mapDisplay.appendChild(newCell);
+				return value;
+			};
+
+			function drawMap(){
+				cellcounter = 0;
+				if (mapGrid.terrain.width != mapGrid.currentDisplayWidth || mapGrid.terrain.height != mapGrid.currentDisplayHeight){
+					buildGrid();
+				} else {
+					mapGrid.visuals.forAll(setMapCell);
+				}
+			}
+
+			function setMapCell(value){
+				mapDisplay.children[cellcounter].className = "cell " + value;
+				cellcounter++;
+				return value;
+			}
+
+			function randomPointFromCenter(x,y,max){
+				var tempX = x - max + Math.floor(Math.random() * (2 * max));
+				var tempY = y - max + Math.floor(Math.random() * (2 * max));
+				return [tempX,tempY]
+			}
+
+			function randomTriangle(x,y,size,value){
+				var pointA = randomPointFromCenter(x,y,size);
+				var pointB = randomPointFromCenter(x,y,size);
+				while (( Math.abs(pointB[0]-pointA[0]) < (size / 4)) || ( Math.abs(pointB[1]-pointA[1]) < (size / 4))){
+					pointB = randomPointFromCenter(x,y,size);
+				}
+				var pointC = randomPointFromCenter(x,y,size);
+				while (( Math.abs(pointB[0]-pointC[0]) < (size / 4)) || ( Math.abs(pointB[1]-pointC[1]) < (size / 4)) || 
+					( Math.abs(pointA[0]-pointC[0]) < (size / 4)) || ( Math.abs(pointA[1]-pointC[1]) < (size / 4))){
+					pointC = randomPointFromCenter(x,y,size);
+				}
+				mapGrid.visuals.fillPolygon([pointA, pointB, pointC],value);
+			}
+
+			function expandValue(x1,y1,x2,y2,value){
+				var mask = mapGrid.visuals.getMaskAll(value);
+				mask = DataGrid.expandMask(mask);
+				mapGrid.visuals.fillRect(x1,y1,x2,y2,value,mask);
+			}
+
+			buildGrid();
+			
+			drawCycle = setInterval(drawMap, 500);
+		</script>
+	</body>
+</html>

@@ -176,7 +176,11 @@ class DataGrid{
 			[["outside","ignore","ignore"],["ignore",1,"ignore"],["ignore","ignore","group"]],
 			[["ignore","outside","ignore"],["ignore",1,"ignore"],["ignore","group","ignore"]],
 			[["ignore","ignore","outside"],["ignore",1,"ignore"],["group","ignore","ignore"]],
-			[["ignore","ignore","ignore"],["group",1,"outside"],["ignore","ignore","ignore"]]
+			[["ignore","ignore","ignore"],["group",1,"outside"],["ignore","ignore","ignore"]],
+			[["ignore","group","ignore"],["ignore",1,"ignore"],["ignore","group","ignore"]],
+			[["ignore","ignore","ignore"],["group",1,"group"],["ignore","ignore","ignore"]],
+			[["ignore","group","group"],["ignore",1,"ignore"],["group","group","ignore"]],
+			[["group","ignore","ignore"],["ignore",1,"ignore"],["ignore","ignore","group"]]
 		];
 		for (var i = 0; i < pixels; i++) {
 			tempGrid.smoothAll([1],expansionRules);
@@ -548,7 +552,7 @@ class DataGrid{
 
 		pointsData = DataGrid.sortPointsClockwiseAroundPoint(pointsData, centerPoint);
 		pointsData.push(pointsData[0]);
-		
+
 		var previousMaskData = (DataGrid.isValidData(mask))? mask : 1;
 		var maskGrid = new DataGrid (x2 - x1 + 1, y2 - y1 + 1, previousMaskData);
 		var previousSlope = (pointsData[1][1] - pointsData[0][1])/(pointsData[1][0] - pointsData[0][0]);
@@ -580,7 +584,7 @@ class DataGrid{
 				return (chopDirection == "left") ? chopLeft : chopRight;
 			}
 
-			console.log('A: '+pointA[0]+","+pointA[1]+" B: "+pointB[0]+","+pointB[1]+" Slope: "+slope+" Chop: "+chopDirection);
+			//console.log('A: '+pointA[0]+","+pointA[1]+" B: "+pointB[0]+","+pointB[1]+" Slope: "+slope+" Chop: "+chopDirection);
 			maskGrid.forAll(chopCallback,maskGrid.data)
 
 			previousSlope = slope;
