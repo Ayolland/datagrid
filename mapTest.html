@@ -17,6 +17,7 @@
 			function buildGrid(){
 				mapGrid.currentDisplayWidth = mapGrid.terrain.width;
 				mapGrid.currentDisplayHeight = mapGrid.terrain.height;
+				copyOverMap();
 				mapDisplay.setAttribute("style","width: "+(mapGrid.currentDisplayWidth)*16+"px;")
 				while (mapDisplay.hasChildNodes()) {
 				    mapDisplay.removeChild(mapDisplay.lastChild);
@@ -58,7 +59,7 @@
 				return [tempX,tempY]
 			}
 
-			function randomTriangle(x,y,size,value){
+			function randomTriangle(x,y,size,value,mask){
 				var pointA = randomPointFromCenter(x,y,size);
 				var pointB = randomPointFromCenter(x,y,size);
 				while (( Math.abs(pointB[0]-pointA[0]) < (size / 4)) || ( Math.abs(pointB[1]-pointA[1]) < (size / 4))){
@@ -69,14 +70,14 @@
 					( Math.abs(pointA[0]-pointC[0]) < (size / 4)) || ( Math.abs(pointA[1]-pointC[1]) < (size / 4))){
 					pointC = randomPointFromCenter(x,y,size);
 				}
-				mapGrid.terrain.fillPolygon([pointA, pointB, pointC],value);
+				mapGrid.terrain.fillPolygon([pointA, pointB, pointC],value, mask);
 			}
 
-			function randomCircle(x,y,size,value){
+			function randomCircle(x,y,size,value,mask){
 				var xOffset = size - Math.floor( Math.random() * 2 * size);
 				var yOffset = size - Math.floor( Math.random() * 2 * size);
 				var radius = size - Math.max( Math.abs(xOffset), Math.abs(yOffset) );
-				mapGrid.terrain.fillCirc(x + xOffset, y + yOffset, radius, value);
+				mapGrid.terrain.fillCirc(x + xOffset, y + yOffset, radius, value, mask);
 			}
 
 			function expandValue(x1,y1,x2,y2,value,times){
@@ -98,12 +99,13 @@
 				}
 			}
 
-			function seedTrees(x1,y1,x2,y2){
-				var mask = mapGrid.terrain.getMask(x1,y1,x2,y2,"grass");
-				mapGrid.terrain.fillRect(x1,y1,x2,y2,["green","green","skip"],mask);			}
-
 			function seedLandBig(){
 				seedLand(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2);
+			}
+
+			function seedTrees(x1,y1,x2,y2){
+				var mask = mapGrid.terrain.getMask(x1,y1,x2,y2,"grass");
+				mapGrid.terrain.fillRect(x1,y1,x2,y2,["green","green","green","skip"],mask);
 			}
 
 			function seedTreesBig(){
@@ -111,11 +113,24 @@
 			}
 
 			function clumpTrees(x1,y1,x2,y2){
-				mapGrid.terrain.clumpRect(x1,y1,x2,y2,["green"],"grass");
+				mapGrid.terrain.clumpRect(x1,y1,x2,y2,["green"],"grass","green");
 			}
 
 			function clumpTreesBig(){
 				clumpTrees(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2);
+			}
+
+			function seedMountains(x1,y1,x2,y2){
+				var mask = mapGrid.terrain.getMask(x1,y1,x2,y2,"grass");
+				var centerX = x1 + Math.floor( (x2 - x1) / 2);
+				var centerY = y1 + Math.floor( (y2 - y1) / 2);
+				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red','skip'], mask);
+				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red','skip'], mask);
+				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red','skip'], mask);
+			}
+
+			function seedMountainsBig(){
+				seedMountains(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2);
 			}
 
 			function expandLandBig(){
@@ -148,10 +163,12 @@
 				copyOverMap,
 				expandLandBig,
 				copyOverMap,
-				seedTreesBig,
-				copyOverMap,
-				clumpTreesBig,
-				copyOverMap
+				// seedMountainsBig,
+				// copyOverMap,
+				// seedTreesBig,
+				// copyOverMap,
+				// clumpTreesBig,
+				// copyOverMap
 			]
 
 			buildGrid();

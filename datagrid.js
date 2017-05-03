@@ -128,7 +128,7 @@ class DataGrid{
 	}
 
 	static invertMask(mask){
-		return cleanMask(mask,true);
+		return DataGrid.cleanMask(mask,true);
 	}
 
 	static contractMask(mask, pixels){
@@ -444,6 +444,7 @@ class DataGrid{
 		}
 
 		var clumpingRules = [
+			[["group","group","group"],["group",fillValue,"group"],["group","group","group"]],
 			[["ignore","outside","ignore"],["ignore",clearValue,"ignore"],["ignore","outside","ignore"]],
 			[["ignore","ignore","ignore"],["outside",clearValue,"outside"],["ignore","ignore","ignore"]],
 		];
@@ -455,8 +456,7 @@ class DataGrid{
 	forCirc(centerX,centerY,radius,callback,mask,edgesOnly){
 		radius = Math.floor(radius);
 		var diameter = radius * 2 + 1;
-		var defaultValue = DataGrid.isValidData(mask) ? mask : 1;
-		var circMask = new DataGrid(diameter,diameter,defaultValue);
+		var circMask = new DataGrid(diameter,diameter,1);
 		var fillCallback = function(oldValue, boxX, boxY){
 			var isInsideCircle = DataGrid.distanceBetween(radius + 0.5,radius + 0.5,boxX,boxY) <= radius;
 			return (isInsideCircle) ? oldValue : null;
@@ -467,6 +467,12 @@ class DataGrid{
 		}
 		var circCallback = (edgesOnly == true) ? edgeCallback : fillCallback;
 		circMask.forAll(circCallback);
+
+		if (DataGrid.isValidData(mask)){
+			var newMask = new DataGrid(mask[0].length, mask.length, mask).cloneFromRect(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
+			newMask.data = DataGrid.invertMask(newMask.data);
+			circMask.fillAll(null, newMask.data);
+		}
 
 		this.forRect(centerX - radius, centerY - radius, centerX + radius, centerY + radius, callback, circMask.data);
 	}
