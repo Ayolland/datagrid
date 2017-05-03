@@ -1,7 +1,7 @@
 <html>
 	<head>
 		<title>Map Generator test</title>
-		<link href="test.css" rel="stylesheet" type="text/css">
+		<link href="map.css" rel="stylesheet" type="text/css">
 	</head>
 	<body>
 		<div id="grid-display"></div>
@@ -9,8 +9,8 @@
 		<script src="datagrid.js"></script>
 		<script>
 			var mapGrid = {};
-			mapGrid.terrain = new DataGrid(40,40,["blue"],true,true);
-			mapGrid.visuals = new DataGrid(40,40,["blue"],true,true);
+			mapGrid.terrain = new DataGrid(40,40,["water"],true,true);
+			mapGrid.visuals = new DataGrid(40,40,["water"],true,true);
 			var mapDisplay = document.getElementById('grid-display');
 			drawStep = 0;
 
@@ -25,9 +25,28 @@
 				mapGrid.visuals.forAll(addCellToMap);
 			};
 
-			function addCellToMap(value){
+			function addCellToMap(value,gridX,gridY){
 				var newCell = document.createElement("div");
 				newCell.className = "cell " + value;
+
+				var tooltip = document.createElement("div");
+				tooltip.className = "tooltip";
+				newCell.appendChild(tooltip);
+
+				var coords = document.createElement("span");
+				coords.appendChild(document.createTextNode("X: " + gridX + " Y: "+gridY));
+				tooltip.appendChild(coords);
+
+				var visualsInfo = document.createElement("span");
+				visualsInfo.appendChild(document.createTextNode(value));
+				visualsInfo.className = "visualsInfo";
+				tooltip.appendChild(visualsInfo);
+
+				var terrainInfo = document.createElement("span");
+				terrainInfo.appendChild(document.createTextNode(mapGrid.terrain.get(gridX,gridY)));
+				terrainInfo.className = "terrainInfo";
+				tooltip.appendChild(terrainInfo);
+
 				mapDisplay.appendChild(newCell);
 				return value;
 			};
@@ -47,8 +66,13 @@
 				}
 			}
 
-			function setMapCell(value){
-				mapDisplay.children[cellcounter].className = "cell " + value;
+			function setMapCell(value,gridX,gridY){
+				var currentCell = mapDisplay.children[cellcounter];
+				currentCell.className = "cell " + value;
+				currentTerr = currentCell.querySelectorAll('.visualsInfo')[0];
+				currentTerr.innerHTML = value;
+				currentTerr = currentCell.querySelectorAll('.terrainInfo')[0];
+				currentTerr.innerHTML = mapGrid.terrain.get(gridX,gridY);
 				cellcounter++;
 				return value;
 			}
@@ -121,25 +145,35 @@
 			}
 
 			function seedMountains(x1,y1,x2,y2){
-				var mask = mapGrid.terrain.getMask(x1,y1,x2,y2,"grass");
-				var centerX = x1 + Math.floor( (x2 - x1) / 2);
-				var centerY = y1 + Math.floor( (y2 - y1) / 2);
-				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red','skip'], mask);
-				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red','skip'], mask);
-				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red','skip'], mask);
+				var mask = mapGrid.terrain.getMaskAll("grass");
+				var centerX = x1 + Math.floor( (x2 - x1) / 3);
+				var centerY = y1 + Math.floor( (y2 - y1) / 3);
+				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 3), ['red','red', 'skip'], mask);
+				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red', 'skip'], mask);
+				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red', 'skip'], mask);
+				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red', 'skip'], mask);
+				randomCircle(centerX,centerY, Math.floor( (y2 - y1) / 2), ['red', 'skip'], mask);
 			}
 
 			function seedMountainsBig(){
 				seedMountains(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2);
 			}
 
+			function clumpMountains(x1,y1,x2,y2){
+				mapGrid.terrain.clumpRect(x1,y1,x2,y2,["red"],"grass","red");
+			}
+
+			function clumpMountainsBig(){
+				clumpMountains(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2);
+			}
+
 			function expandLandBig(){
 				expandValue(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2, "grass");
-				expandValue(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2, "blue");
+				expandValue(1,1,mapGrid.terrain.width - 2,mapGrid.terrain.height - 2, "water");
 			}
 
 			function clearAll(){
-				mapGrid.terrain.fillAll("blue");
+				mapGrid.terrain.fillAll("water");
 			};
 
 			function newBigContinent(){
@@ -148,6 +182,158 @@
 				expandLandBig();
 				seedTreesBig();
 			};
+
+			function shoreEdges(){
+				var mask = mapGrid.visuals.getMaskAll("water");
+
+				var shorelineRules = [
+					[["group","group","group"],["group","shore__outer00","group"],["group","group","outside"]],
+					[["group","group","group"],["group","shore__outer20","group"],["outside","group","group"]],
+					[["group","group","outside"],["group","shore__outer02","group"],["group","group","group"]],
+					[["outside","group","group"],["group","shore__outer22","group"],["group","group","group"]],
+					[["group","group","group"],["group","shore__outer10","group"],["ignore","outside","ignore"]],
+					[["ignore","outside","ignore"],["group","shore__outer12","group"],["group","group","group"]],
+					[["group","group","ignore"],["group","shore__outer01","outside"],["group","group","ignore"]],
+					[["ignore","group","group"],["outside","shore__outer21","group"],["ignore","group","group"]],
+					[["ignore","outside","ignore"],["outside","shore__inner00","group"],["ignore","group","group"]],
+					[["ignore","outside","ignore"],["group","shore__inner20","outside"],["group","group","ignore"]],
+					[["ignore","group","group"],["outside","shore__inner02","group"],["ignore","outside","ignore"]],
+					[["group","group","ignore"],["group","shore__inner22","outside"],["ignore","outside","ignore"]],
+				];
+
+				mapGrid.visuals.smoothAll(["water"],shorelineRules, mask);
+			}
+
+			function loosePines(){
+				mapGrid.visuals.clumpAll(["green"],"pine__0","green");
+				mapGrid.visuals.clumpAll(["green"],"pine__0","green");
+				mapGrid.visuals.clumpAll(["green"],"pine__0","green");
+				mapGrid.visuals.clumpAll(["green"],"pine__0","green");
+			}
+
+			function pineEdges(){
+				var mask = mapGrid.visuals.getMaskAll("green");
+
+				var treeRules = [
+					[["ignore","outside","ignore"],["outside","pines__00","group"],["ignore","group","ignore"]],
+					[["ignore","outside","ignore"],["group","pines__10","group"],["ignore","group","ignore"]],
+					[["ignore","outside","ignore"],["group","pines__20","outside"],["ignore","group","ignore"]],
+					[["ignore","group","ignore"],["outside","pines__01","group"],["ignore","group","ignore"]],
+					[["ignore","group","ignore"],["group","pines__11","group"],["ignore","group","ignore"]],
+					[["ignore","group","ignore"],["group","pines__21","outside"],["ignore","group","ignore"]],
+					[["ignore","group","ignore"],["outside","pines__02","group"],["ignore","outside","ignore"]],
+					[["ignore","group","ignore"],["group","pines__12","group"],["ignore","outside","ignore"]],
+					[["ignore","group","ignore"],["group","pines__22","outside"],["ignore","outside","ignore"]],
+					[["ignore","ignore","ignore"],["ignore","blue","ignore"],["ignore","ignore","ignore"]]
+				];
+
+				mapGrid.visuals.smoothAll(["green"],treeRules, mask);
+			}
+
+			function decoratePines(){
+				var mask = mapGrid.visuals.getMaskAll("pine__0");
+				mapGrid.visuals.fillAll(["pine__0","pine__1","pine__2"],mask);
+
+				var mask2 = mapGrid.visuals.getMaskAll("pines__11");
+
+				var fancyPines = function(oldvalue,boxX,boxY){
+					if( mapGrid.visuals.get(boxX,boxY + 1) == "pines__11" && oldvalue == "pines__11" && Math.random() > 0.75){
+						var stampType = (Math.random() > 0.5)? "A" : "B";
+						mapGrid.visuals.set(boxX,boxY + 1, "pines__deco"+stampType+1);
+						return "pines__deco"+stampType+0
+					} else {
+						return oldvalue;
+					}
+				}
+
+				mapGrid.visuals.forAll(fancyPines,mask2);
+
+			}
+
+			function looseMountains(){
+				mapGrid.visuals.clumpAll(["red"],"mountain__0","red");
+				mapGrid.visuals.clumpAll(["red"],"mountain__0","red");
+				mapGrid.visuals.clumpAll(["red"],"mountain__0","red");
+				mapGrid.visuals.clumpAll(["red"],"mountain__0","red");
+			}
+
+			function mountainEdges(){
+				var mask = mapGrid.visuals.getMaskAll("red");
+
+				var mountainRules = [
+					[["ignore","outside","ignore"],["outside","mountains__00","group"],["ignore","group","ignore"]],
+					[["ignore","outside","ignore"],["group","mountains__10","group"],["ignore","group","ignore"]],
+					[["ignore","outside","ignore"],["group","mountains__20","outside"],["ignore","group","ignore"]],
+					[["ignore","group","ignore"],["outside","mountains__01","group"],["ignore","group","ignore"]],
+					[["ignore","group","ignore"],["group","mountains__11","group"],["ignore","group","ignore"]],
+					[["ignore","group","ignore"],["group","mountains__21","outside"],["ignore","group","ignore"]],
+					[["ignore","group","ignore"],["outside","mountains__02","group"],["ignore","outside","ignore"]],
+					[["ignore","group","ignore"],["group","mountains__12","group"],["ignore","outside","ignore"]],
+					[["ignore","group","ignore"],["group","mountains__22","outside"],["ignore","outside","ignore"]],
+					[["ignore","ignore","ignore"],["ignore","blue","ignore"],["ignore","ignore","ignore"]]
+				];
+
+				mapGrid.visuals.smoothAll(["red"],mountainRules, mask);
+			}
+
+			function decorateMountains(){
+				var mask = mapGrid.visuals.getMaskAll("mountain__0");
+				mapGrid.visuals.fillAll(["mountain__0","mountain__1","mountain__2"],mask);
+
+				var mask2 = mapGrid.visuals.getMaskAll("mountains__11");
+
+				var fancyMountains = function(oldvalue,boxX,boxY){
+					if( mapGrid.visuals.get(boxX,boxY + 1) == "mountains__11" && oldvalue == "mountains__11" && Math.random() > 0.75){
+						var stampType = (Math.random() > 0.5)? "A" : "B";
+						mapGrid.visuals.set(boxX,boxY + 1, "mountains__deco"+stampType+1);
+						return "mountains__deco"+stampType+0
+					} else {
+						return oldvalue;
+					}
+				}
+
+				mapGrid.visuals.forAll(fancyMountains,mask2);
+
+			}
+
+			function decorateWater(){
+				var mask = mapGrid.visuals.getMaskAll("water");
+				mapGrid.visuals.fillAll(["water","water","water","water","water","water","water","water__deco"],mask);
+			}
+
+			function decorateGrass(){
+				var mask = mapGrid.visuals.getMaskAll("grass");
+				var grassArr = [
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass",
+					"grass__deco1",
+					"grass__deco2",
+					"grass__deco3",
+					"grass__deco4",
+					"grass__deco5",
+					"grass__deco6",
+					"grass__deco7",
+					"grass__deco8",
+					"grass__deco9"
+				]
+				mapGrid.visuals.fillAll(grassArr,mask);
+			}
 
 			function followInstructions(){
 				if( drawStep < instructions.length){
@@ -163,12 +349,23 @@
 				copyOverMap,
 				expandLandBig,
 				copyOverMap,
-				// seedMountainsBig,
-				// copyOverMap,
-				// seedTreesBig,
-				// copyOverMap,
-				// clumpTreesBig,
-				// copyOverMap
+				seedMountainsBig,
+				copyOverMap,
+				seedTreesBig,
+				copyOverMap,
+				clumpTreesBig,
+				copyOverMap,
+				clumpMountainsBig,
+				copyOverMap,
+				shoreEdges,
+				loosePines,
+				looseMountains,
+				pineEdges,
+				mountainEdges,
+				decoratePines,
+				decorateMountains,
+				decorateWater,
+				decorateGrass
 			]
 
 			buildGrid();

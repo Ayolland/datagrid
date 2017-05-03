@@ -1,0 +1,201 @@
+#spritesheet {
+  background: url("scenery.png") no-repeat no-repeat;
+  height: 100%; }
+
+.tooltip {
+  display: none;
+  position: relative;
+  width: 75px;
+  left: 20px;
+  padding: 5px;
+  background: white;
+  border: 1px solid black;
+
+  span {
+    display: block;
+    font-family: sans-serif;
+    font-size: 10px;
+  }
+}
+
+.cell {
+  box-sizing: border-box;
+  background: url("scenery.png") no-repeat no-repeat;
+  display: block;
+  width: 16px;
+  height: 16px;
+  float: left;
+
+  &:hover {
+    border: 1px white solid;
+    box-shadow: 0 0 5px white inset;
+
+    .tooltip {
+      display: block;
+    }
+  }
+}
+
+@mixin single-sprite($x,$y){
+  background-position: (-16px * $x) (-16px * $y);
+}
+
+@mixin simple-array($prefix,$x1,$y1,$x2,$y2){
+  $counter: 1;
+  @for $x from $x1 through $x2 {
+    $offsetX: (-16px * $x1) + (-16px * ($x - 1));
+    @for $y from $y1 through $y2 {
+      $offsetY: (-16px * $y1) + (-16px * $y);
+
+      &__#{$prefix}#{$counter}{
+        background-position: $offsetX $offsetY;
+      }
+
+      $counter: $counter + 1;
+    }
+  }
+}
+
+@mixin pseudo-hex($startingX,$startingY) {
+  @for $x from 0 through 2 {
+    $offsetX: (-16px * $startingX) + (-16px * $x);
+    @for $y from 0 through 2 {
+      $offsetY: (-16px * $startingY) + (-16px * $y);
+
+      &__#{$x}#{$y}{
+        background-position: $offsetX $offsetY;
+      }
+    }
+  }
+}
+
+@mixin pseudo-hex-extras($startingX,$startingY){
+  $offsetX1: (-16px * $startingX);
+  $offsetX2: (-16px * ($startingX + 1));
+
+  @for $y from 0 through 1 {
+    $offsetY: (-16px * $startingY) + (-16px * $y);
+
+    &__decoA#{$y}{
+      background-position: $offsetX1 $offsetY;
+    }
+
+    &__decoB#{$y}{
+      background-position: $offsetX2 $offsetY;
+    }
+  }
+}
+
+@mixin three-deco($startingX,$startingY) {
+  $offsetX: (-16px * $startingX);
+  @for $y from 0 through 2 {
+    $offsetY: (-16px * $startingY) + (-16px * $y);
+
+    &__#{$y}{
+      background-position: $offsetX $offsetY;
+    }
+  }
+}
+
+@mixin ring($prefix,$startingX,$startingY){
+  @for $x from 0 through 2 {
+    $offsetX: (-16px * $startingX) + (-16px * $x);
+    @for $y from 0 through 2 {
+      $offsetY: (-16px * $startingY) + (-16px * $y);
+
+      @if ($x != 1 && $y != 1) {
+        &__#{$prefix}#{$x}#{$y}{
+          background-position: $offsetX $offsetY;
+        }
+      }
+    }
+  }
+}
+
+.water{
+  @include single-sprite(10,0);
+
+  &__deco{
+    @include single-sprite(10,1);
+  }
+}
+
+.grass{
+  @include single-sprite(0,0);
+  @include simple-array('deco',1,0,3,2);
+}
+
+.house{
+  @include simple-array('',1,3,2,3);
+}
+
+.monument{
+  @include simple-array('',1,10,2,11);
+}
+
+.pine{
+  @include three-deco(4,0);
+}
+
+.pines{
+  @include pseudo-hex(5,0);
+  @include pseudo-hex-extras(8,0);
+}
+
+.oak{
+  @include three-deco(4,3);
+}
+
+.oaks{
+  @include pseudo-hex(5,3);
+  @include pseudo-hex-extras(8,3);
+}
+
+.mountain{
+  @include three-deco(4,9);
+}
+
+.mountains{
+  @include pseudo-hex(5,9);
+  @include pseudo-hex-extras(8,9);
+}
+
+.hill{
+  @include single-sprite(4,8);
+}
+
+.hills{
+  @include pseudo-hex(5,6);
+}
+
+.shore{
+  @include ring('outer',11,0);
+  @include ring('inner',14,0);
+}
+
+
+// old cell css
+
+.null {
+  background: black; }
+
+.white {
+  background: white; }
+
+.clear {
+  background: transparent; }
+
+.foggy {
+  background: rgba(0, 0, 0, 0.1); }
+
+.blue {
+  background: blue; }
+
+.red {
+  background: red; }
+
+.green {
+  background: green; }
+
+.yellow {
+  background: yellow; }

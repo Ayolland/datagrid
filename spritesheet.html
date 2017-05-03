@@ -1,0 +1,61 @@
+<html>
+	<head>
+		<title>Sprite SHeet Info</title>
+		<link href="test.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="spritesheet"></div>
+
+		<script src="datagrid.js"></script>
+		<script>
+			var palette = new DataGrid(17,12,["clear"],true,true);
+			var paletteDisplay = document.getElementById('spritesheet');
+
+			function buildGrid(){
+				palette.currentDisplayWidth = palette.width;
+				palette.currentDisplayHeight = palette.height;
+				paletteDisplay.setAttribute("style","width: "+(palette.currentDisplayWidth)*16+"px;")
+				while (paletteDisplay.hasChildNodes()) {
+				    paletteDisplay.removeChild(paletteDisplay.lastChild);
+				}
+				palette.forAll(addCellToMap);
+			};
+
+			function addCellToMap(value,gridX,gridY){
+				var newCell = document.createElement("div");
+				newCell.className = "cell " + value;
+
+				var tooltip = document.createElement("div");
+				tooltip.className = "tooltip";
+				newCell.appendChild(tooltip);
+
+				var coords = document.createElement("span");
+				coords.appendChild(document.createTextNode("X: " + gridX + " Y: "+gridY));
+				tooltip.appendChild(coords);
+
+				paletteDisplay.appendChild(newCell);
+				return value;
+			};
+
+			function drawMap(){
+				followInstructions();
+
+				cellcounter = 0;
+				if (palette.width != palette.currentDisplayWidth || palette.terrain.height != palette.currentDisplayHeight){
+					buildGrid();
+				} else {
+					palette.forAll(setMapCell);
+				}
+			}
+
+			function setMapCell(value,gridX,gridY){
+				var currentCell = paletteDisplay.children[cellcounter];
+				currentCell.className = "cell " + value;
+				cellcounter++;
+				return value;
+			}
+
+			buildGrid();
+		</script>
+	</body>
+</html>

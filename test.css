@@ -1,103 +1,98 @@
-body{
-	//background: black;
-}
+#spritesheet {
+  background: url("scenery.png") no-repeat no-repeat;
+  height: 100%; }
 
-#grid-display{
-}
+.cell {
+  box-sizing: border-box;
+  background: url("scenery.png") no-repeat no-repeat;
+  display: block;
+  width: 16px;
+  height: 16px;
+  float: left; }
 
-.cell{
-	box-sizing: border-box;
-	background: url('scenery.png') no-repeat no-repeat;
-	display: block;
-	width: 16px;
-	height: 16px;
-	float: left;
-}
+.cell:hover .tooltip {
+  display: block; }
 
-.cell:hover{
-    border: 1px white solid;
-	box-shadow: 0 0 5px white inset;
-}
+.tooltip {
+  display: none;
+  position: relative;
+  width: 50px;
+  left: 20px;
+  padding: 5px;
+  background: white;
+  border: 1px solid black; }
 
-.null{
-	background: black;
-}
+.tooltip span {
+  display: block;
+  font-family: sans-serif;
+  font-size: 10px; }
 
-.white{
-	background: white;
-}
+.cell:hover {
+  border: 1px white solid;
+  box-shadow: 0 0 5px white inset; }
 
-.blue{
-	background: blue;
-}
+.null {
+  background: black; }
 
-.red{
-	background: red;
-}
+.white {
+  background: white; }
 
-.green{
-	background: green;
-}
+.clear {
+  background: transparent; }
 
-.yellow{
-	background: yellow;
-}
+.foggy {
+  background: rgba(0, 0, 0, 0.1); }
 
-.grass{
-}
+.blue {
+  background: blue; }
 
-.grassDeco1{
-	background-position: -16px 0px;
-}
+.red {
+  background: red; }
 
-.water{
-	background-position: -160px 0px;
-}
+.green {
+  background: green; }
 
-.waterDeco1{
-	background-position: -160px -16px;
-}
+.yellow {
+  background: yellow; }
 
-.tree{
-	background-position: -64px -32px;
-}
+.grassDeco1 {
+  background-position: -16px 0px; }
 
-.forest{
-	background-position: -96px -16px;
-}
+.water {
+  background-position: -160px 0px; }
 
-.forest00{
-	background-position: -80px 0px;
-}
+.waterDeco1 {
+  background-position: -160px -16px; }
 
-.forest01{
-	background-position: -96px 0px;
-}
+.tree {
+  background-position: -64px -32px; }
 
-.forest02{
-	background-position: -112px 0px;
-}
+.forest {
+  background-position: -96px -16px; }
 
-.forest10{
-	background-position: -80px -16px;
-}
+.forest00 {
+  background-position: -80px 0px; }
 
-.forest11{
-	background-position: -96px -16px;
-}
+.forest01 {
+  background-position: -96px 0px; }
 
-.forest12{
-	background-position: -112px -16px;
-}
+.forest02 {
+  background-position: -112px 0px; }
 
-.forest20{
-	background-position: -80px -32px;
-}
+.forest10 {
+  background-position: -80px -16px; }
 
-.forest21{
-	background-position: -96px -32px;
-}
+.forest11 {
+  background-position: -96px -16px; }
 
-.forest22{
-	background-position: -112px -32px;
-}
+.forest12 {
+  background-position: -112px -16px; }
+
+.forest20 {
+  background-position: -80px -32px; }
+
+.forest21 {
+  background-position: -96px -32px; }
+
+.forest22 {
+  background-position: -112px -32px; }
