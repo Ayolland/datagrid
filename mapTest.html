@@ -183,6 +183,25 @@
 				seedTreesBig();
 			};
 
+			function cleanShore(){
+				var mask = mapGrid.visuals.getMaskAll("water");
+
+				var cleaningRules = [
+					[["ignore","ignore","ignore"],["outside","grass","outside"],["ignore","ignore","ignore"]],
+					[["ignore","outside","ignore"],["ignore","grass","ignore"],["ignore","outside","ignore"]],
+					[["outside","group","outside"],["group","grass","group"],["outside","group","outside"]],
+					[["group","group","group"],["group","grass","group"],["outside","group","outside"]],
+					[["outside","group","outside"],["group","grass","group"],["group","group","group"]],
+					[["outside","group","group"],["group","grass","group"],["outside","group","group"]],
+					[["group","group","outside"],["group","grass","group"],["group","group","outside"]],
+					[["outside","group","group"],["group","grass","group"],["group","group","outside"]],
+					[["group","group","outside"],["group","grass","group"],["outside","group","group"]],
+				];
+
+				mapGrid.visuals.smoothAll(["water"],cleaningRules, mask);
+
+			}
+
 			function shoreEdges(){
 				var mask = mapGrid.visuals.getMaskAll("water");
 
@@ -348,6 +367,8 @@
 				seedLandBig,
 				copyOverMap,
 				expandLandBig,
+				copyOverMap,
+				cleanShore,
 				copyOverMap,
 				seedMountainsBig,
 				copyOverMap,

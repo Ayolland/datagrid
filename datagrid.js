@@ -1,6 +1,8 @@
 // HONEY-DO LIST
 //
-// clumping algorithims
+// translate
+// export to CSV
+// add rSeed?
 // Add/remove/get/for/fill columns/rows
 // Force pathing(maze functions)
 
@@ -105,6 +107,18 @@ class DataGrid{
 			return ( sortDiff / Math.abs(sortDiff));
 		}
 		return pointsData.sort(sortFunction);
+	}
+
+	static function randomPoint(datagrid){
+		var tempX = Math.floor(Math.random() * (datagrid.width - 1));
+		var tempY = Math.floor(Math.random() * (datagrid.height - 1));
+		return [tempX,tempY]
+	}
+	
+	static function randomPointNearby(x,y,maxDistance){
+		var tempX = x - max + Math.floor(Math.random() * (2 * maxDistance));
+		var tempY = y - max + Math.floor(Math.random() * (2 * maxDistance));
+		return [tempX,tempY]
 	}
 
 	// masking class functions
