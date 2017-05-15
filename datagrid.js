@@ -109,18 +109,6 @@ class DataGrid{
 		return pointsData.sort(sortFunction);
 	}
 
-	static function randomPoint(datagrid){
-		var tempX = Math.floor(Math.random() * (datagrid.width - 1));
-		var tempY = Math.floor(Math.random() * (datagrid.height - 1));
-		return [tempX,tempY]
-	}
-	
-	static function randomPointNearby(x,y,maxDistance){
-		var tempX = x - max + Math.floor(Math.random() * (2 * maxDistance));
-		var tempY = y - max + Math.floor(Math.random() * (2 * maxDistance));
-		return [tempX,tempY]
-	}
-
 	// masking class functions
 
 	static cleanMask(mask,invert){
@@ -226,6 +214,18 @@ class DataGrid{
 		}
 
 		return y;
+	}
+
+	function randomPoint(datagrid){
+		var tempX = Math.floor(Math.random() * (this.width - 1));
+		var tempY = Math.floor(Math.random() * (this.height - 1));
+		return [tempX,tempY];
+	}
+	
+	function randomPointNearby(x,y,maxDistance){
+		var tempX = x - max + Math.floor(Math.random() * (2 * maxDistance));
+		var tempY = y - max + Math.floor(Math.random() * (2 * maxDistance));
+		return [this.clampXBounds(tempX),this.clampXBounds(tempY)];
 	}
 
 	// get/set functions
