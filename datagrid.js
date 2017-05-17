@@ -216,15 +216,15 @@ class DataGrid{
 		return y;
 	}
 
-	function randomPoint(datagrid){
+	randomPoint(datagrid){
 		var tempX = Math.floor(Math.random() * (this.width - 1));
 		var tempY = Math.floor(Math.random() * (this.height - 1));
 		return [tempX,tempY];
 	}
 	
-	function randomPointNearby(x,y,maxDistance){
-		var tempX = x - max + Math.floor(Math.random() * (2 * maxDistance));
-		var tempY = y - max + Math.floor(Math.random() * (2 * maxDistance));
+	randomPointNearby(x,y,maxDistance){
+		var tempX = x - maxDistance + Math.floor(Math.random() * (2 * maxDistance));
+		var tempY = y - maxDistance + Math.floor(Math.random() * (2 * maxDistance));
 		return [this.clampXBounds(tempX),this.clampXBounds(tempY)];
 	}
 
@@ -282,7 +282,7 @@ class DataGrid{
 			console.log("getStats requires two points");
 			return;
 		}
-		var tempGrid = new this.cloneFromRect(x,y,x2,y2);
+		var tempGrid = this.cloneFromRect(x,y,x2,y2);
 		return tempGrid.allStats();
 	}
 
@@ -327,7 +327,7 @@ class DataGrid{
 				var value = this.get([x1 + boxX],[y1 + boxY])
 				var maskIsBlocking = maskExists && ( mask[boxY][boxX] == null || typeof(mask[boxY][boxX]) == "undefined");
 				if (!maskIsBlocking){
-					var setValue = callback(value, boxX, boxY, x1, y1);
+					var setValue = DataGrid.findValue(callback(value, boxX, boxY, x1, y1));
 					if (setValue != "skip"){
 						this.set( [x1 + boxX],[y1 + boxY], setValue );
 					}
@@ -356,6 +356,24 @@ class DataGrid{
 		return new DataGrid(rectWidth, rectHeight, this.get(x1,y1,x2,y2), wrapX, wrapY)
 	}
 
+	shiftRect(x1,y1,x2,y2,dX,dY,background,mask){
+		var newStamp = this.cloneFromRect(x1,y1,x2,y2);
+		if (DataGrid.isValidData(mask)){
+			var invertedMask = DataGrid.invertMask(mask);
+		}
+		this.fillRect(x1,y1,x2,y2,background,invertedMask);
+		this.stamp(x1 + dX, y1 + dY, newStamp, mask);
+	}
+
+	rotateRect(x1,y1,x2,y2,turns,background){
+		var rotateGrid = this.cloneFromRect(x1,y1,x2,y2);
+		this.fillRect(x1,y1,x2,y2,background);
+		rotateGrid.rotateAll(turns);
+		this.stamp(x1,y1,rotateGrid);
+	}
+
+	// cellular automata
+
 	runRect(x1,y1,x2,y2,callback,mask){
 		var newData = new DataGrid(x2 - x1 + 1, y2 - y1 + 1);
 		var injectedCallback = function(oldValue, rectX, rectY, x1, y1){
@@ -366,27 +384,39 @@ class DataGrid{
 		this.stamp(x1,y1,newData,mask);
 	}
 
-	runLifeRect(x1,y1,x2,y2,onValue,offValue,mask){
+	runBornSurviveRect(x1,y1,x2,y2,onValue,offValue,bornArray,surviveArray,mask){
+		if( bornArray.length > 8 || surviveArray.length > 8){
+			console.log('Born/Survive requires 0-8 length arrays of numbers 1-8');
+			return;
+		}
 		var thisDataGrid = this;
-		var lifeCallback = function(oldValue, rectX, rectY, x1, y1){
+		function BSCallback(oldValue, rectX, rectY, x1, y1){
 			var statsObject = thisDataGrid.getNeighborsStats(x1 + rectX, y1 + rectY);
 			statsObject[oldValue]--;
+			var neighborsAlive = statsObject[onValue];
 			if (oldValue == onValue){
-				if (statsObject[onValue] < 2 || statsObject[onValue] > 3){
-					return offValue;
-				} else {
+				if (surviveArray.indexOf(neighborsAlive) >= 0){
 					return onValue;
+				} else {
+					return offValue;
 				}
 			} else if (oldValue == offValue){
-				if (statsObject[onValue] == 3){
+				if (bornArray.indexOf(neighborsAlive) >= 0){
 					return onValue;
 				} else {
 					return offValue;
 				}
 			}
 		}
+		this.runRect(x1,y1,x2,y2, BSCallback,mask);
+	}
 
-		this.runRect(x1,y1,x2,y2, lifeCallback,mask);
+	runLifeRect(x1,y1,x2,y2,onValue,offValue,mask){
+		this.runBornSurviveRect(x1,y1,x2,y2, onValue, offValue, [3], [2,3],mask);
+	}
+
+	runMazectricRect(x1,y1,x2,y2,onValue,offValue,mask){
+		this.runBornSurviveRect(x1,y1,x2,y2, onValue, offValue, [3], [1,2,3,4],mask);
 	}
 
 	smoothRect(x1,y1,x2,y2,valuesGroup,rulesSet,mask){
@@ -434,22 +464,6 @@ class DataGrid{
 		}
 
 		this.runRect(x1,y1,x2,y2,smoothingCallback,mask);
-	}
-
-	shiftRect(x1,y1,x2,y2,dX,dY,background,mask){
-		var newStamp = this.cloneFromRect(x1,y1,x2,y2);
-		if (DataGrid.isValidData(mask)){
-			var invertedMask = DataGrid.invertMask(mask);
-		}
-		this.fillRect(x1,y1,x2,y2,background,invertedMask);
-		this.stamp(x1 + dX, y1 + dY, newStamp, mask);
-	}
-
-	rotateRect(x1,y1,x2,y2,turns,background){
-		var rotateGrid = this.cloneFromRect(x1,y1,x2,y2);
-		this.fillRect(x1,y1,x2,y2,background);
-		rotateGrid.rotateAll(turns);
-		this.stamp(x1,y1,rotateGrid);
 	}
 
 	clumpRect(x1,y1,x2,y2,selectValues,clearValue,fillValue,mask){
@@ -521,14 +535,14 @@ class DataGrid{
 		var slope = (y2 - y1) / (x2 - x1);
 		var xIntercept = (x1 - xMin) - (y1 - yMin) / slope;
 
-		var lineCallback = function(value, boxX, boxY){
+		var lineCallback = function(value, boxX, boxY, x1, y1){
 			if(!isFinite(slope)){
 				if (xMin + boxX == x1){
-					return callback(value, boxX, boxY);
+					return callback(value, boxX, boxY, x1, y1);
 				}
 			} else if (slope == 0){
 				if (yMin + boxY == y1){
-					return callback(value, boxX, boxY);
+					return callback(value, boxX, boxY, x1, y1);
 				}
 			} else {
 				if ( Math.abs((boxX + 0.5) - (((boxY + 0.5) / slope) + xIntercept)) <= 0.5 ){
@@ -706,8 +720,16 @@ class DataGrid{
 		this.runRect(0,0,this.width - 1, this.height - 1, callback)
 	}
 
+	runBornSurviveAll(onValue,offValue,bornArray,surviveArray,mask){
+		this.runBornSurviveRect(0,0,this.width - 1,this.height - 1,onValue,offValue,bornArray,surviveArray,mask)
+	}
+
 	runLifeAll(onValue,offValue,mask){
-		this.runLifeRect(0,0,this.width - 1,this.height - 1,onValue,offValue)
+		this.runLifeRect(0,0,this.width - 1,this.height - 1,onValue,offValue,mask)
+	}
+
+	runMazectricAll(onValue,offValue,mask){
+		this.runMazectricRect(0,0,this.width - 1,this.height - 1,onValue,offValue,mask)
 	}
 
 	smoothAll(valuesGroup,rulesSet,mask){

@@ -51,9 +51,13 @@
 			}
 
 			function lifeCycle(){
-				testGrid.runLifeAll("blue","white");
-				drawGrid();
+				testGrid.runBornSurviveRect(0,0,testGrid.width - 1, testGrid.height - 1, "blue", "white", [3],[2,3]);
 			}
+
+			function mazeCycle(){
+				testGrid.runMazectricAll("blue", "white");
+			}
+
 
 			var forestRules1 = [
 				DataGrid.fromString('[["ignore","group","ignore"],["outside","tree","outside"],["ignore","group","ignore"]]'),
@@ -107,11 +111,14 @@
 				return points.toString();
 			}
 
-			var testGrid = new DataGrid(20,20,["blue"],true,true);
+			var testGrid = new DataGrid(20,20,["blue","white"],true,true);
 			buildGrid();
 			//smoothGrid();
 			
-			drawCycle = setInterval(drawGrid, 500);
+			drawCycle = setInterval(function(){
+				mazeCycle();
+				drawGrid();
+			}, 500);
 		</script>
 	</body>
 </html>
